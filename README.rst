@@ -45,15 +45,19 @@ Description
 Example
         ::
 
-                awsrest.s3_generic(
-                "accessKey",
-                "secretKey",
-                req.request,
-                req.http.content-md5,
-                req.http.content-type,
-                req.http.CanonicalizedAmzHeaders,
-                "/",
-                now);
+                import awsrest;
+                
+                sub vcl_recv{
+                  awsrest.s3_generic(
+                  "accessKey",
+                  "secretKey",
+                  req.request,
+                  req.http.content-md5,
+                  req.http.content-type,
+                  req.http.CanonicalizedAmzHeaders,
+                  "/",
+                  now);
+                }
 
 
                 //data
