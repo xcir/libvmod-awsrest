@@ -193,7 +193,7 @@ vmod_hmac_generic(struct sess *sp, hashid hash, const char *key, const char *msg
 	return hexenc;
 }
 
-void vmod_aws_rest_generic(struct sess *sp,
+void vmod_s3_generic(struct sess *sp,
 	const char *accesskey,
 	const char *secret,
 	const char *method,

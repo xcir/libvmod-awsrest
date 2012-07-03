@@ -23,13 +23,13 @@ DESCRIPTION
 FUNCTIONS
 ============
 
-aws_rest_generic
+s3_generic
 ------------------
 
 Prototype
         ::
 
-                aws_rest_generic(
+                s3_generic(
                     STRING accesskey,
                     STRING secret,
                     STRING method,
@@ -45,7 +45,7 @@ Description
 Example
         ::
 
-                awsrest.aws_rest_generic(
+                awsrest.s3_generic(
                 "accessKey",
                 "secretKey",
                 req.request,
