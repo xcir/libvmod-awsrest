@@ -24,7 +24,7 @@ FUNCTIONS
 ============
 
 aws_rest_generic
--------------
+------------------
 
 Prototype
         ::

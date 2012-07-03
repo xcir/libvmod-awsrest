@@ -1,8 +1,8 @@
 AC_PREREQ(2.59)
 AC_COPYRIGHT([Copyright (c) 2012 Syohei Tanaka(@xcir)])
-AC_INIT([libvmod-campur_xcir], [trunk])
+AC_INIT([libvmod-awsrest], [trunk])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR(src/vmod_campur_xcir.vcc)
+AC_CONFIG_SRCDIR(src/vmod_awsrest.vcc)
 AM_CONFIG_HEADER(config.h)
 
 AC_CANONICAL_SYSTEM
