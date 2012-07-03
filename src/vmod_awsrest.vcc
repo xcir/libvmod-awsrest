@@ -1,0 +1,4 @@
+Module awsrest
+Init init_function
+
+Function VOID aws_rest_generic(STRING,STRING,STRING,STRING,STRING,STRING,STRING,TIME)
