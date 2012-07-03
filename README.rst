@@ -3,7 +3,7 @@ vmod_awsrest
 ===================
 
 -------------------------------
-Varnish campur module
+Varnish AWS REST API module
 -------------------------------
 
 :Author: Syohei Tanaka(@xcir)
@@ -104,5 +104,6 @@ File layout and configuration based on libvmod-example
 * Copyright (c) 2011 Varnish Software AS
 
 hmac-sha1 and base64 based on libvmod-digest( https://github.com/varnish/libvmod-digest )
+
 main logic based on  http://www.applelife100.com/2012/06/23/using-rest-api-of-amazon-s3-in-php-1/
 
