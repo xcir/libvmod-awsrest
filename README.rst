@@ -49,14 +49,15 @@ Example
                 
                 sub vcl_recv{
                   awsrest.s3_generic(
-                  "accessKey",
-                  "secretKey",
-                  req.request,
-                  req.http.content-md5,
-                  req.http.content-type,
-                  req.http.CanonicalizedAmzHeaders,
-                  "/",
-                  now);
+                  "accessKey",            //AWSAccessKeyId
+                  "secretKey",            //SecretAccessKeyID
+                  req.request,            //HTTP-Verb
+                  req.http.content-md5,   //Content-MD5
+                  req.http.content-type,  //Content-Type
+                  "",                     //canonicalizedAmzHeaders
+                  "/",                    //canonicalizedResource
+                  now                     //Date
+                  );
                 }
 
 
@@ -93,7 +94,7 @@ Make targets:
 HISTORY
 ===========
 
-Version 0.1: aws_rest_generic
+Version 0.1: add s3_generic method
 
 COPYRIGHT
 =============
