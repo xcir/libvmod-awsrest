@@ -240,7 +240,7 @@ void vmod_s3_generic(struct sess *sp,
 	strcat(buf,datetxt);
 	strcat(buf,"\n");
 
-	//CanonicalizedAmzHeaders
+	//CanonicalizedAmzHeaders(x-amz-*)
 	if(CanonicalizedAmzHeaders)	strcat(buf,CanonicalizedAmzHeaders);
 
 
@@ -248,7 +248,6 @@ void vmod_s3_generic(struct sess *sp,
 	//CanonicalizedResource
 	if(CanonicalizedResource)	strcat(buf,CanonicalizedResource);
 
-	
 	////////////////
 	//build signature(HMAC-SHA1 + BASE64)
 	const char* signature=vmod_hmac_generic(sp,MHASH_SHA1 , secret,buf);
@@ -259,3 +258,10 @@ void vmod_s3_generic(struct sess *sp,
 	const char* auth = VRT_WrkString(sp,"AWS ",accesskey,":",signature,vrt_magic_string_end);
 	VRT_SetHdr(sp, HDR_REQ, "\016Authorization:", auth,vrt_magic_string_end);
 }
+
+
+const char*
+vmod_lf(struct sess *sp){
+	return VRT_WrkString(sp,"\n",vrt_magic_string_end);
+}
+	
