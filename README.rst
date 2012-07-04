@@ -47,6 +47,11 @@ Example
 
                 import awsrest;
                 
+                backend default {
+                  .host = "s3.amazonaws.com";
+                  .port = "80";
+                }
+                
                 sub vcl_recv{
                   awsrest.s3_generic(
                   "accessKey",            //AWSAccessKeyId
