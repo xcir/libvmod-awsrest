@@ -55,7 +55,7 @@ Example
                   req.http.content-md5,   //Content-MD5
                   req.http.content-type,  //Content-Type
                   "",                     //canonicalizedAmzHeaders
-                  "/",                    //canonicalizedResource
+                  req.url,                //canonicalizedResource
                   now                     //Date
                   );
                 }

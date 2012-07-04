@@ -217,6 +217,8 @@ void vmod_s3_generic(struct sess *sp,
 	tt = (time_t) date;
 	(void)gmtime_r(&tt, &tm);
 	AN(strftime(datetxt, 32, "%a, %d %b %Y %T +0000", &tm));
+//        AN(strftime(datetxt, 32, "%a, %d %b %Y %T GMT", &tm));
+
 
 	////////////////
 	//build raw signature
@@ -240,6 +242,8 @@ void vmod_s3_generic(struct sess *sp,
 
 	//CanonicalizedAmzHeaders
 	if(CanonicalizedAmzHeaders)	strcat(buf,CanonicalizedAmzHeaders);
+
+
 
 	//CanonicalizedResource
 	if(CanonicalizedResource)	strcat(buf,CanonicalizedResource);
