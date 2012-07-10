@@ -204,16 +204,36 @@ void vmod_s3_generic(struct sess *sp,
 	double date
 
 ){
-	char buf[512];
-	buf[0] = 0;
+	//valid
+	AN(accesskey);
+	AN(secret);
+	AN(method);
+	AN(CanonicalizedResource);
 	
+	
+	int len = 35;//Date + \n*4
+	char datetxt[32];
+	struct tm tm;
+	time_t tt;
+	char *buf;
+
+	//calc length
+	//method
+	len += strlen(method);
+	//content-md5
+	if(contentMD5)	len += strlen(contentMD5);
+	//content-type
+	if(contentType)	len += strlen(contentType);
+	//CanonicalizedAmzHeaders(x-amz-*)
+	if(CanonicalizedAmzHeaders)	len += strlen(CanonicalizedAmzHeaders);
+	//CanonicalizedResource
+	if(CanonicalizedResource)	len += strlen(CanonicalizedResource);
+	
+	buf = calloc(1, len + 1);
 
 	////////////////
 	//gen date text
-	char *datetxt;
-	AN(datetxt = WS_Alloc(sp->http->ws, 32));
-	struct tm tm;
-	time_t tt;
+	datetxt[0] = 0;
 	tt = (time_t) date;
 	(void)gmtime_r(&tt, &tm);
 	AN(strftime(datetxt, 32, "%a, %d %b %Y %T +0000", &tm));
@@ -224,7 +244,6 @@ void vmod_s3_generic(struct sess *sp,
 	//build raw signature
 
 	//method
-	AN(method);
 	strcat(buf,method);
 	strcat(buf,"\n");
 	
@@ -243,15 +262,17 @@ void vmod_s3_generic(struct sess *sp,
 	//CanonicalizedAmzHeaders(x-amz-*)
 	if(CanonicalizedAmzHeaders)	strcat(buf,CanonicalizedAmzHeaders);
 
-
-
 	//CanonicalizedResource
 	if(CanonicalizedResource)	strcat(buf,CanonicalizedResource);
 
 	////////////////
 	//build signature(HMAC-SHA1 + BASE64)
 	const char* signature=vmod_hmac_generic(sp,MHASH_SHA1 , secret,buf);
-
+	
+	////////////////
+	//free buffer
+	free(buf);
+	
 	////////////////
 	//set data
 	VRT_SetHdr(sp, HDR_REQ, "\005Date:", datetxt,vrt_magic_string_end);
