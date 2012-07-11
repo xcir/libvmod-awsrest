@@ -230,6 +230,7 @@ void vmod_s3_generic(struct sess *sp,
 	if(CanonicalizedResource)	len += strlen(CanonicalizedResource);
 	
 	buf = calloc(1, len + 1);
+	AN(buf);
 
 	////////////////
 	//gen date text
