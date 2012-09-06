@@ -19,6 +19,11 @@ import awsrest;
 DESCRIPTION
 ==============
 
+ATTENTION
+==============
+Attention to 307 Temporary Redirect.
+
+ref: http://docs.amazonwebservices.com/AmazonS3/latest/dev/Redirects.html
 
 FUNCTIONS
 ============
