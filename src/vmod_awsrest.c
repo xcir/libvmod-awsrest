@@ -3,6 +3,7 @@
 #include "vrt.h"
 #include "bin/varnishd/cache.h"
 #include <time.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <syslog.h>
@@ -15,7 +16,9 @@
 #include "vcc_if.h"
 #include <mhash.h>
 
-
+#include <mhash.h>
+#include <curl/curl.h>
+#include <json/json.h>
 
 enum alphabets {
 	BASE64 = 0,
@@ -29,6 +32,13 @@ static struct e_alphabet {
 	char i64[256];
 	char padding;
 } alphabet[N_ALPHA];
+
+
+static char *aws_accessKeyId;
+static char *aws_secretAccessKey;
+static time_t aws_expiration = 0;
+
+
 static void
 vmod_digest_alpha_init(struct e_alphabet *alpha)
 {
@@ -279,6 +289,122 @@ void vmod_s3_generic(struct sess *sp,
 	VRT_SetHdr(sp, HDR_REQ, "\005Date:", datetxt,vrt_magic_string_end);
 	const char* auth = VRT_WrkString(sp,"AWS ",accesskey,":",signature,vrt_magic_string_end);
 	VRT_SetHdr(sp, HDR_REQ, "\016Authorization:", auth,vrt_magic_string_end);
+}
+
+typedef struct curl_data{
+	char* buf;
+	int pos;
+} curl_data_t;
+
+write_function_pt(void *ptr, size_t size, size_t nmemb, curl_data_t* data){
+	memcpy(data->buf + data->pos, ptr, size*nmemb);
+	data->pos += size*nmemb;
+
+	return size*nmemb;
+}
+
+void vmod_s3_generic_iam(struct sess *sp,
+	const char *iamAddress,
+	const char *method,
+	const char *contentMD5,
+	const char *contentType,
+	const char *CanonicalizedAmzHeaders,
+	const char *CanonicalizedResource,
+	double date
+
+){
+
+	time_t localtime;
+	localtime = time(NULL);
+	if(difftime(aws_expiration, localtime) < 0) {
+		// credentials are still valid
+		if(aws_accessKeyId != NULL && aws_secretAccessKey != NULL) {
+			vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, 
+					method, contentMD5, contentType, 
+					CanonicalizedAmzHeaders, CanonicalizedResource, 
+					date);
+			return;
+		}
+	} 
+
+
+	CURL *curl;
+	// HEAD request to get file length
+	double length = -1;
+        curl = curl_easy_init();
+        if(curl) {            
+                curl_easy_setopt(curl, CURLOPT_URL, iamAddress);
+                curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);                
+
+                if(curl_easy_perform(curl) == CURLE_OK) {
+			if(curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &length) != CURLE_OK){
+				length = -1;
+			}
+		}
+                curl_easy_cleanup(curl);
+        }
+
+
+	if(length <= 0) {
+		return;
+	}
+
+	char* response = malloc(((long)length)+1);
+	if(response == NULL){
+		return;
+	}
+	
+	curl_data_t data = {
+		.buf = response,
+		.pos = 0
+	};
+
+	// GET request to receive data
+	curl = curl_easy_init();
+	if(curl) {            
+		curl_easy_setopt(curl, CURLOPT_URL, iamAddress);
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function_pt);
+		curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+	}
+
+	struct json_object *resp_obj;
+	struct json_object *key_id;
+	struct json_object *access_key;
+	struct json_object *expiration_date;
+
+	/*  sample response
+	 * {
+	 * "Code" : "Success",
+	 * "LastUpdated" : "2012-12-18T17:38:13Z",
+	 * "Type" : "AWS-HMAC",
+	 * "AccessKeyId" : "ASI...",
+	 * "SecretAccessKey" : "Z8vv...",
+	 * "Token" : "AQoD...",
+	 * "Expiration" : "2012-12-19T00:13:24Z"
+	 * }
+	 */
+
+	resp_obj = json_tokener_parse(response);
+	key_id = json_object_object_get(resp_obj, "AccessKeyId");
+	access_key = json_object_object_get(resp_obj, "SecretAccessKey");
+	expiration_date = json_object_object_get(resp_obj, "Expiration");
+
+	struct tm tm;
+	memset(&tm, 0, sizeof(struct tm));
+	strptime(expiration_date, "%Y-%m-%dT%H:%M:%SZ", &tm);
+	time_t expiration = mktime(&tm);
+
+	aws_accessKeyId = json_object_get_string(key_id);
+	aws_secretAccessKey = json_object_get_string(access_key);
+	aws_expiration = expiration;	
+
+	free(response);
+
+	vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, method, contentMD5, contentType, CanonicalizedAmzHeaders, CanonicalizedResource, date);
 }
 
 
