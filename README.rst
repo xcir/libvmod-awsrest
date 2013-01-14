@@ -7,8 +7,8 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Syohei Tanaka(@xcir)
-:Date: 2012-07-04
-:Version: 0.1
+:Date: 2013-01-14
+:Version: 0.2
 :Manual section: 3
 
 SYNOPSIS
@@ -75,6 +75,52 @@ Example
                 15 TxHeader     b Date: Tue, 03 Jul 2012 16:21:47 +0000
                 15 TxHeader     b Authorization: AWS accessKey:XUfSbQDuOWL24PTR1qavWSr6vjM=
 
+s3_generic_iam(EXPERIMENTAL)
+------------------------------
+
+Prototype
+        ::
+
+                s3_generic_iam(
+                    STRING iamAddress,
+                    STRING method,
+                    STRING contentMD5,
+                    STRING contentType,
+                    STRING CanonicalizedAmzHeaders,
+                    STRING CanonicalizedResource,
+                    TIME date)
+Return value
+	VOID
+Description
+	generate Authorization header for AWS REST API.(set to req.http.Date and req.http.Authorization)
+Example
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "s3.amazonaws.com";
+                  .port = "80";
+                }
+                
+                sub vcl_recv{
+                  awsrest.s3_generic_iam(
+                  "http://169.254.169.254/latest/meta-data/iam/security-credentials/role-name",            //AWS-IAM URL see http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances
+                  req.request,            //HTTP-Verb
+                  req.http.content-md5,   //Content-MD5
+                  req.http.content-type,  //Content-Type
+                  "",                     //canonicalizedAmzHeaders
+                  req.url,                //canonicalizedResource
+                  now                     //Date
+                  );
+                }
+
+
+                //data
+                15 TxHeader     b Date: Tue, 03 Jul 2012 16:21:47 +0000
+                15 TxHeader     b Authorization: AWS accessKey:XUfSbQDuOWL24PTR1qavWSr6vjM=
+
+
 lf
 ------------------
 
@@ -126,6 +172,8 @@ HISTORY
 ===========
 
 Version 0.1: add s3_generic() , lf() method
+
+Version 0.2: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
 
 COPYRIGHT
 =============
