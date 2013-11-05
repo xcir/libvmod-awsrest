@@ -2,5 +2,5 @@ Module awsrest
 Init init_function
 
 Function VOID s3_generic(STRING,STRING,STRING,STRING,STRING,STRING,STRING,TIME)
-Function VOID s3_generic_iam(STRING,STRING,STRING,STRING,STRING,STRING,TIME)
+Function VOID s3_generic_iam(STRING,STRING,STRING,STRING,STRING,TIME)
 Function STRING lf()
