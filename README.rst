@@ -37,10 +37,10 @@ Prototype
                 s3_generic(
                     STRING accesskey,
                     STRING secret,
+                    STRING token,
                     STRING method,
                     STRING contentMD5,
                     STRING contentType,
-                    STRING CanonicalizedAmzHeaders,
                     STRING CanonicalizedResource,
                     TIME date)
 Return value
@@ -61,10 +61,10 @@ Example
                   awsrest.s3_generic(
                   "accessKey",            //AWSAccessKeyId
                   "secretKey",            //SecretAccessKeyID
+                  "",                     //securityToken
                   req.request,            //HTTP-Verb
                   req.http.content-md5,   //Content-MD5
                   req.http.content-type,  //Content-Type
-                  "",                     //canonicalizedAmzHeaders
                   req.url,                //canonicalizedResource
                   now                     //Date
                   );
@@ -86,7 +86,6 @@ Prototype
                     STRING method,
                     STRING contentMD5,
                     STRING contentType,
-                    STRING CanonicalizedAmzHeaders,
                     STRING CanonicalizedResource,
                     TIME date)
 Return value
@@ -109,7 +108,6 @@ Example
                   req.request,            //HTTP-Verb
                   req.http.content-md5,   //Content-MD5
                   req.http.content-type,  //Content-Type
-                  "",                     //canonicalizedAmzHeaders
                   req.url,                //canonicalizedResource
                   now                     //Date
                   );
@@ -119,6 +117,7 @@ Example
                 //data
                 15 TxHeader     b Date: Tue, 03 Jul 2012 16:21:47 +0000
                 15 TxHeader     b Authorization: AWS accessKey:XUfSbQDuOWL24PTR1qavWSr6vjM=
+                15 TxHeader     b x-amz-security-token: AQoDYXdzE...
 
 
 lf
