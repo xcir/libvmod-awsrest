@@ -36,6 +36,7 @@ static struct e_alphabet {
 
 static char *aws_accessKeyId;
 static char *aws_secretAccessKey;
+static char *aws_securityToken;
 static time_t aws_expiration = 0;
 
 
@@ -206,10 +207,10 @@ vmod_hmac_generic(struct sess *sp, hashid hash, const char *key, const char *msg
 void vmod_s3_generic(struct sess *sp,
 	const char *accesskey,
 	const char *secret,
+	const char *token,
 	const char *method,
 	const char *contentMD5,
 	const char *contentType,
-	const char *CanonicalizedAmzHeaders,
 	const char *CanonicalizedResource,
 	double date
 
@@ -219,7 +220,6 @@ void vmod_s3_generic(struct sess *sp,
 	AN(secret);
 	AN(method);
 	AN(CanonicalizedResource);
-	
 	
 	int len = 35;//Date + \n*4
 	char datetxt[32];
@@ -235,7 +235,7 @@ void vmod_s3_generic(struct sess *sp,
 	//content-type
 	if(contentType)	len += strlen(contentType);
 	//CanonicalizedAmzHeaders(x-amz-*)
-	if(CanonicalizedAmzHeaders)	len += strlen(CanonicalizedAmzHeaders);
+	if(token)	len += 22 + strlen(token);
 	//CanonicalizedResource
 	if(CanonicalizedResource)	len += strlen(CanonicalizedResource);
 	
@@ -271,7 +271,11 @@ void vmod_s3_generic(struct sess *sp,
 	strcat(buf,"\n");
 
 	//CanonicalizedAmzHeaders(x-amz-*)
-	if(CanonicalizedAmzHeaders)	strcat(buf,CanonicalizedAmzHeaders);
+	if(token) {
+		strcat(buf,"x-amz-security-token:");
+		strcat(buf,token);
+		strcat(buf,"\n");
+	}
 
 	//CanonicalizedResource
 	if(CanonicalizedResource)	strcat(buf,CanonicalizedResource);
@@ -289,6 +293,7 @@ void vmod_s3_generic(struct sess *sp,
 	VRT_SetHdr(sp, HDR_REQ, "\005Date:", datetxt,vrt_magic_string_end);
 	const char* auth = VRT_WrkString(sp,"AWS ",accesskey,":",signature,vrt_magic_string_end);
 	VRT_SetHdr(sp, HDR_REQ, "\016Authorization:", auth,vrt_magic_string_end);
+        if (token)	VRT_SetHdr(sp, HDR_REQ, "\025x-amz-security-token:", token,vrt_magic_string_end);
 }
 
 typedef struct curl_data{
@@ -308,7 +313,6 @@ void vmod_s3_generic_iam(struct sess *sp,
 	const char *method,
 	const char *contentMD5,
 	const char *contentType,
-	const char *CanonicalizedAmzHeaders,
 	const char *CanonicalizedResource,
 	double date
 
@@ -316,12 +320,14 @@ void vmod_s3_generic_iam(struct sess *sp,
 
 	time_t localtime;
 	localtime = time(NULL);
-	if(difftime(aws_expiration, localtime) < 0) {
+
+        // if key expires in less that 5 min, new key is guaranteed to be available
+	if(difftime(aws_expiration, localtime) > 5*60) {
 		// credentials are still valid
-		if(aws_accessKeyId != NULL && aws_secretAccessKey != NULL) {
-			vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, 
+		if(aws_accessKeyId != NULL && aws_secretAccessKey != NULL && aws_securityToken != NULL) {
+			vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, aws_securityToken,
 					method, contentMD5, contentType, 
-					CanonicalizedAmzHeaders, CanonicalizedResource, 
+					CanonicalizedResource, 
 					date);
 			return;
 		}
@@ -374,6 +380,7 @@ void vmod_s3_generic_iam(struct sess *sp,
 	struct json_object *resp_obj;
 	struct json_object *key_id;
 	struct json_object *access_key;
+	struct json_object *security_token;
 	struct json_object *expiration_date;
 
 	/*  sample response
@@ -391,20 +398,22 @@ void vmod_s3_generic_iam(struct sess *sp,
 	resp_obj = json_tokener_parse(response);
 	key_id = json_object_object_get(resp_obj, "AccessKeyId");
 	access_key = json_object_object_get(resp_obj, "SecretAccessKey");
+	security_token = json_object_object_get(resp_obj, "Token");
 	expiration_date = json_object_object_get(resp_obj, "Expiration");
 
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
-	strptime(expiration_date, "%Y-%m-%dT%H:%M:%SZ", &tm);
+	strptime(json_object_get_string(expiration_date), "%Y-%m-%dT%H:%M:%SZ", &tm);
 	time_t expiration = mktime(&tm);
 
 	aws_accessKeyId = json_object_get_string(key_id);
 	aws_secretAccessKey = json_object_get_string(access_key);
+	aws_securityToken = json_object_get_string(security_token);
 	aws_expiration = expiration;	
 
 	free(response);
 
-	vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, method, contentMD5, contentType, CanonicalizedAmzHeaders, CanonicalizedResource, date);
+	vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, aws_securityToken, method, contentMD5, contentType, CanonicalizedResource, date);
 }
 
 
