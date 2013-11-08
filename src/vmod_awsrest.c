@@ -320,7 +320,9 @@ void vmod_s3_generic_iam(struct sess *sp,
 
 	time_t localtime;
 	localtime = time(NULL);
-	if(difftime(aws_expiration, localtime) < 0) {
+
+        // if key expires in less that 5 min, new key is guaranteed to be available
+	if(difftime(aws_expiration, localtime) > 5*60) {
 		// credentials are still valid
 		if(aws_accessKeyId != NULL && aws_secretAccessKey != NULL && aws_securityToken != NULL) {
 			vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, aws_securityToken,
@@ -401,7 +403,7 @@ void vmod_s3_generic_iam(struct sess *sp,
 
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
-	strptime(expiration_date, "%Y-%m-%dT%H:%M:%SZ", &tm);
+	strptime(json_object_get_string(expiration_date), "%Y-%m-%dT%H:%M:%SZ", &tm);
 	time_t expiration = mktime(&tm);
 
 	aws_accessKeyId = json_object_get_string(key_id);
