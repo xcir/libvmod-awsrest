@@ -6,7 +6,7 @@ vmod_awsrest
 Varnish AWS REST API module
 -------------------------------
 
-:Author: Syohei Tanaka(@xcir)
+:Author: Shohei Tanaka(@xcir)
 :Date: 2015-05-06
 :Version: 0.3
 :Manual section: 3
@@ -163,7 +163,7 @@ COPYRIGHT
 This document is licensed under the same license as the
 libvmod-awsrest project. See LICENSE for details.
 
-* Copyright (c) 2015 Syohei Tanaka(@xcir)
+* Copyright (c) 2015 Shohei Tanaka(@xcir)
 
 File layout and configuration based on libvmod-example
 
