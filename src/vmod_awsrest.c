@@ -144,36 +144,30 @@ void vmod_v4_generic(struct sess *sp,
 	
 	////////////////
 	//create signed headers
-	size_t len = strlen(_signed_headers) + 33;
-	char signed_headers[len];
-	signed_headers[0]=0;
-	char *psigned_headers=&signed_headers;
+	size_t len = strlen(_signed_headers) + 32;
+	char *psigned_headers = WS_Alloc(sp->ws,len);
 	sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
 	
 	
 	////////////////
 	//create canonical headers
 	len = strlen(_canonical_headers) + 115;
-	char canonical_headers[len];
-	canonical_headers[0]=0;
-	char *pcanonical_headers = &canonical_headers;
+	char *pcanonical_headers = WS_Alloc(sp->ws,len);
 	sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
 	
 	////////////////
 	//create credential scope
-	char credential_scope[128];
-	credential_scope[0]=0;
-	char *pcredential_scope=&credential_scope;
+	len = strlen(datestamp)+ strlen(region)+ strlen(service)+ 16;
+	char *pcredential_scope = WS_Alloc(sp->ws,len);
 	sprintf(pcredential_scope,"%s/%s/%s/aws4_request",datestamp,region,service);
 	
 	////////////////
 	//create canonical request
-	char canonical_request[400];
-	canonical_request[0]=0;
+	len = strlen(method)+ strlen(requrl)+ strlen(pcanonical_headers)+ strlen(psigned_headers)+ strlen(payload_hash) + 6;
+	char *pcanonical_request = WS_Alloc(sp->ws,len);
 	char tmpform[32];
 	tmpform[0]=0;
 	char *ptmpform=&tmpform;
-	char *pcanonical_request=&canonical_request;
 
 	char *adr = strchr(requrl, (int)'?');
 	if(adr == NULL){
@@ -199,9 +193,8 @@ void vmod_v4_generic(struct sess *sp,
 	
 	////////////////
 	//create string_to_sign
-	char string_to_sign[196];
-	string_to_sign[0]=0;
-	char *pstring_to_sign=&string_to_sign;
+	len = strlen(amzdate)+ strlen(pcredential_scope)+ 33;
+	char *pstring_to_sign = WS_Alloc(sp->ws,len);
 	sprintf(pstring_to_sign,"AWS4-HMAC-SHA256\n%s\n%s\n%s",amzdate,pcredential_scope,vmod_hash_sha256(sp, pcanonical_request));
 	
 	////////////////
@@ -210,9 +203,8 @@ void vmod_v4_generic(struct sess *sp,
 
 	////////////////
 	//create authorization
-	char authorization[512];
-	authorization[0]=0;
-	char *pauthorization=&authorization;
+	len = strlen(access_key)+ strlen(pcredential_scope)+ strlen(psigned_headers)+ strlen(signature)+ 58;
+	char *pauthorization= WS_Alloc(sp->ws,len);
 	
 	sprintf(pauthorization,"AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
 		access_key,
