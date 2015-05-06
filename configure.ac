@@ -36,10 +36,10 @@ PKG_PROG_PKG_CONFIG
 AC_HEADER_STDC
 AC_CHECK_HEADERS([sys/stdlib.h])
 
-# check for libcurl
-AC_CHECK_HEADERS(curl/curl.h,,AC_MSG_WARN(STL classes missing ?))
-PKG_CHECK_MODULES([CURL], [libcurl >= 7.0])
 
+# check for mhash
+AC_CHECK_LIB(mhash, mhash_count, [AC_DEFINE([HAVE_MHASH],[1],[Define we have mhash])],
+		[AC_MSG_ERROR([libvmod-awsrest requires libmhash.])])
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
 

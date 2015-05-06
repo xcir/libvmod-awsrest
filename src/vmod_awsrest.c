@@ -4,409 +4,231 @@
 #include "bin/varnishd/cache.h"
 #include <time.h>
 #include <string.h>
-
-#include <arpa/inet.h>
 #include <syslog.h>
-#include <poll.h>
-	#include <fcntl.h>
-	#include <sys/mman.h>
-	#include <sys/types.h>
 #include <stdio.h>
+#include <mhash.h>
 
 #include "vcc_if.h"
-#include <mhash.h>
 
-#include <mhash.h>
-#include <curl/curl.h>
-#include <json/json.h>
-
-enum alphabets {
-	BASE64 = 0,
-	BASE64URL = 1,
-	BASE64URLNOPAD = 2,
-	N_ALPHA
-};
-
-static struct e_alphabet {
-	char *b64;
-	char i64[256];
-	char padding;
-} alphabet[N_ALPHA];
-
-
-static char *aws_accessKeyId;
-static char *aws_secretAccessKey;
-static time_t aws_expiration = 0;
-
-
-static void
-vmod_digest_alpha_init(struct e_alphabet *alpha)
-{
-	int i;
-	const char *p;
-
-	for (i = 0; i < 256; i++)
-		alpha->i64[i] = -1;
-	for (p = alpha->b64, i = 0; *p; p++, i++)
-		alpha->i64[(int)*p] = (char)i;
-	if (alpha->padding)
-		alpha->i64[alpha->padding] = 0;
-}
-
-int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
-{
-    	alphabet[BASE64].b64 =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
-		"ghijklmnopqrstuvwxyz0123456789+/";
-	alphabet[BASE64].padding = '=';
-	alphabet[BASE64URL].b64 =
-		 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
-		 "ghijklmnopqrstuvwxyz0123456789-_";
-	alphabet[BASE64URL].padding = '=';
-	alphabet[BASE64URLNOPAD].b64 =
-		 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
-		 "ghijklmnopqrstuvwxyz0123456789-_";
-	alphabet[BASE64URLNOPAD].padding = 0;
-	vmod_digest_alpha_init(&alphabet[BASE64]);
-	vmod_digest_alpha_init(&alphabet[BASE64URL]);
-	vmod_digest_alpha_init(&alphabet[BASE64URLNOPAD]);
-	return (0);
-}
-static size_t
-base64_encode (struct e_alphabet *alpha, const char *in,
-		size_t inlen, char *out, size_t outlen)
-{
-	size_t outlenorig = outlen;
-	unsigned char tmp[3], idx;
-
-	if (outlen<4)
-		return -1;
-
-	if (inlen == 0) {
-		*out = '\0';
-		return (1);
-	}
-
-	while (1) {
-		assert(inlen);
-		assert(outlen>3);
-
-		tmp[0] = (unsigned char) in[0];
-		tmp[1] = (unsigned char) in[1];
-		tmp[2] = (unsigned char) in[2];
-		*out++ = alpha->b64[(tmp[0] >> 2) & 0x3f];
-
-		idx = (tmp[0] << 4);
-		if (inlen>1)
-			idx += (tmp[1] >> 4);
-		idx &= 0x3f;
-		*out++ = alpha->b64[idx];
-
-		if (inlen>1) {
-			idx = (tmp[1] << 2);
-			if (inlen>2)
-				idx += tmp[2] >> 6;
-			idx &= 0x3f;
-
-			*out++ = alpha->b64[idx];
-		} else {
-			if (alpha->padding)
-				*out++ = alpha->padding;
-		}
-
-		if (inlen>2) {
-			*out++ = alpha->b64[tmp[2] & 0x3f];
-		} else {
-			if (alpha->padding)
-				*out++ = alpha->padding;
-		}
-
-		/*
-		 * XXX: Only consume 4 bytes, but since we need a fifth for
-		 * XXX: NULL later on, we might as well test here.
-		 */
-		if (outlen<5)
-			return -1;
-
-		outlen -= 4;
-
-		if (inlen<4)
-			break;
-
-		inlen -= 3;
-		in += 3;
-	}
-
-	assert(outlen);
-	outlen--;
-	*out = '\0';
-	return outlenorig-outlen;
-}
 
 
 static const char *
-vmod_base64_generic(struct sess *sp, enum alphabets a, const char *msg)
+vmod_hmac_sha256(struct sess *sp,
+	const char *key,size_t lkey, const char *msg,size_t lmsg,bool raw)
 {
-	char *p;
-	int u;
-	assert(msg);
-	assert(a<N_ALPHA);
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	CHECK_OBJ_NOTNULL(sp->ws, WS_MAGIC);
-
-	u = WS_Reserve(sp->ws,0);
-	p = sp->ws->f;
-	u = base64_encode(&alphabet[a],msg,strlen(msg),p,u);
-	if (u < 0) {
-		WS_Release(sp->ws,0);
-		return NULL;
-	}
-	WS_Release(sp->ws,u);
-	return p;
-}
-
-
-static const char *
-vmod_hmac_generic(struct sess *sp, hashid hash, const char *key, const char *msg)
-{
+	hashid hash = MHASH_SHA256;
 	size_t maclen = mhash_get_hash_pblock(hash);
 	size_t blocksize = mhash_get_block_size(hash);
 	unsigned char mac[blocksize];
-	unsigned char *hexenc;
-	unsigned char *hexptr;
 	int j;
+	int i;
 	MHASH td;
+	char *p;
+	char *ptmp;
 
 	assert(msg);
 	assert(key);
-	CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
-	CHECK_OBJ_NOTNULL(sp->ws, WS_MAGIC);
 
-	/*
-	 * XXX: From mhash(3):
-	 * size_t mhash_get_hash_pblock(hashid type);
-	 *     It returns the block size that the algorithm operates. This
-	 *     is used in mhash_hmac_init. If the return value is 0 you
-	 *     shouldn't use that algorithm in  HMAC.
-	 */
 	assert(mhash_get_hash_pblock(hash) > 0);
 
-	td = mhash_hmac_init(hash, (void *) key, strlen(key),
+	td = mhash_hmac_init(hash, (void *) key, lkey,
 		mhash_get_hash_pblock(hash));
-	mhash(td, msg, strlen(msg));
+	mhash(td, msg, lmsg);
 	mhash_hmac_deinit(td,mac);
-
-	//base64encode
-	hexenc = WS_Alloc(sp->ws, 64); // 0x, '\0' + 2 per input
-	base64_encode(&alphabet[0],mac,blocksize,hexenc,64);
-	return hexenc;
+	if(raw) return mac;
+	
+	p = WS_Alloc(sp->ws,mhash_get_block_size(hash)*2 + 1);
+	ptmp = p;
+	for (i = 0; i<mhash_get_block_size(hash);i++) {
+		sprintf(ptmp,"%.2x",mac[i]);
+		ptmp+=2;
+	}
+	return p;
+	
+	
+}
+static const char *
+vmod_v4_getSignature(struct sess *sp,
+	const char* secret_key, const char* dateStamp, const char* regionName, const char* serviceName,const char* string_to_sign
+){
+	size_t len = strlen(secret_key) + 5;
+	char key[len];
+	char *kp = &key;
+	sprintf(kp,"AWS4%s",secret_key);
+	
+	char *kDate    = vmod_hmac_sha256(sp,kp,strlen(kp), dateStamp,strlen(dateStamp),true);
+	char *kRegion  = vmod_hmac_sha256(sp,kDate,   32, regionName,strlen(regionName),true);
+	char *kService = vmod_hmac_sha256(sp,kRegion, 32, serviceName,strlen(serviceName),true);
+	char *kSigning = vmod_hmac_sha256(sp,kService,32, "aws4_request", 12,true);
+	
+	return vmod_hmac_sha256(sp,kSigning,32, string_to_sign,strlen(string_to_sign),false);
 }
 
-void vmod_s3_generic(struct sess *sp,
-	const char *accesskey,
-	const char *secret,
-	const char *method,
-	const char *contentMD5,
-	const char *contentType,
-	const char *CanonicalizedAmzHeaders,
-	const char *CanonicalizedResource,
-	double date
 
+static const char *
+vmod_hash_sha256(struct sess *sp, const char *msg)
+{
+	MHASH td;
+	hashid hash = MHASH_SHA256;
+	unsigned char h[mhash_get_block_size(hash)];
+	int i;
+	char *p;
+	char *ptmp;
+	td = mhash_init(hash);
+	mhash(td, msg, strlen(msg));
+	mhash_deinit(td, h);
+	p = WS_Alloc(sp->ws,mhash_get_block_size(hash)*2 + 1);
+	ptmp = p;
+	for (i = 0; i<mhash_get_block_size(hash);i++) {
+		sprintf(ptmp,"%.2x",h[i]);
+		ptmp+=2;
+	}
+	return p;
+}
+
+void vmod_v4_generic(struct sess *sp,
+	const char *service,               //= 's3';
+	const char *region,                //= 'ap-northeast-1';
+	const char *access_key,            //= 'your access key';
+	const char *secret_key,            //= 'your secret key';
+	const char *_signed_headers,       //= 'host;';// x-amz-content-sha256;x-amz-date is appended by default.
+	const char *_canonical_headers,    //= 'host:s3-ap-northeast-1.amazonaws.com\n'
+	unsigned feature                   //= reserved param(for varnish4)
 ){
-	//valid
-	AN(accesskey);
-	AN(secret);
-	AN(method);
-	AN(CanonicalizedResource);
+
 	
-	
-	int len = 35;//Date + \n*4
-	char datetxt[32];
-	struct tm tm;
+	////////////////
+	//get data
+	char *method;
+	char *requrl;
+	enum gethdr_e where;
+	if (sp->wrk->bereq->ws != NULL){
+		//bereq
+		method= sp->wrk->bereq->hd[HTTP_HDR_REQ].b;
+		requrl= sp->wrk->bereq->hd[HTTP_HDR_URL].b;
+		where = HDR_BEREQ;
+	}else{
+		//req
+		method= sp->http->hd[HTTP_HDR_REQ].b;
+		requrl= sp->http->hd[HTTP_HDR_URL].b;
+		where = HDR_REQ;
+	}
+
+	////////////////
+	//create date
 	time_t tt;
-	char *buf;
-
-	//calc length
-	//method
-	len += strlen(method);
-	//content-md5
-	if(contentMD5)	len += strlen(contentMD5);
-	//content-type
-	if(contentType)	len += strlen(contentType);
-	//CanonicalizedAmzHeaders(x-amz-*)
-	if(CanonicalizedAmzHeaders)	len += strlen(CanonicalizedAmzHeaders);
-	//CanonicalizedResource
-	if(CanonicalizedResource)	len += strlen(CanonicalizedResource);
+	char amzdate[17];
+	char datestamp[9];
+	tt = time(NULL);
+	struct tm * gmtm = gmtime(&tt);
 	
-	buf = calloc(1, len + 1);
-	AN(buf);
+	sprintf(amzdate,
+		"%d%02d%02dT%02d%02d%02dZ",
+		gmtm->tm_year +1900,
+		gmtm->tm_mon  +1,
+		gmtm->tm_mday,
+		gmtm->tm_hour,
+		gmtm->tm_min,
+		gmtm->tm_sec
+	);
+	sprintf(datestamp,
+		"%d%02d%02d",
+		gmtm->tm_year +1900,
+		gmtm->tm_mon  +1,
+		gmtm->tm_mday
+	);
 
 	////////////////
-	//gen date text
-	datetxt[0] = 0;
-	tt = (time_t) date;
-	(void)gmtime_r(&tt, &tm);
-	AN(strftime(datetxt, 32, "%a, %d %b %Y %T +0000", &tm));
-//        AN(strftime(datetxt, 32, "%a, %d %b %Y %T GMT", &tm));
-
-
-	////////////////
-	//build raw signature
-
-	//method
-	strcat(buf,method);
-	strcat(buf,"\n");
-	
-	//content-md5
-	if(contentMD5)	strcat(buf,contentMD5);
-	strcat(buf,"\n");
-	
-	//content-type
-	if(contentType)	strcat(buf,contentType);
-	strcat(buf,"\n");
-
-	//date
-	strcat(buf,datetxt);
-	strcat(buf,"\n");
-
-	//CanonicalizedAmzHeaders(x-amz-*)
-	if(CanonicalizedAmzHeaders)	strcat(buf,CanonicalizedAmzHeaders);
-
-	//CanonicalizedResource
-	if(CanonicalizedResource)	strcat(buf,CanonicalizedResource);
-
-	////////////////
-	//build signature(HMAC-SHA1 + BASE64)
-	const char* signature=vmod_hmac_generic(sp,MHASH_SHA1 , secret,buf);
+	//create payload
+	const char * payload_hash = vmod_hash_sha256(sp, "");
 	
 	////////////////
-	//free buffer
-	free(buf);
+	//create signed headers
+	size_t len = strlen(_signed_headers) + 33;
+	char signed_headers[len];
+	signed_headers[0]=0;
+	char *psigned_headers=&signed_headers;
+	sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
+	
 	
 	////////////////
-	//set data
-	VRT_SetHdr(sp, HDR_REQ, "\005Date:", datetxt,vrt_magic_string_end);
-	const char* auth = VRT_WrkString(sp,"AWS ",accesskey,":",signature,vrt_magic_string_end);
-	VRT_SetHdr(sp, HDR_REQ, "\016Authorization:", auth,vrt_magic_string_end);
-}
+	//create canonical headers
+	len = strlen(_canonical_headers) + 115;
+	char canonical_headers[len];
+	canonical_headers[0]=0;
+	char *pcanonical_headers = &canonical_headers;
+	sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
+	
+	////////////////
+	//create credential scope
+	char credential_scope[128];
+	credential_scope[0]=0;
+	char *pcredential_scope=&credential_scope;
+	sprintf(pcredential_scope,"%s/%s/%s/aws4_request",datestamp,region,service);
+	
+	////////////////
+	//create canonical request
+	char canonical_request[400];
+	canonical_request[0]=0;
+	char tmpform[32];
+	tmpform[0]=0;
+	char *ptmpform=&tmpform;
+	char *pcanonical_request=&canonical_request;
 
-typedef struct curl_data{
-	char* buf;
-	int pos;
-} curl_data_t;
-
-write_function_pt(void *ptr, size_t size, size_t nmemb, curl_data_t* data){
-	memcpy(data->buf + data->pos, ptr, size*nmemb);
-	data->pos += size*nmemb;
-
-	return size*nmemb;
-}
-
-void vmod_s3_generic_iam(struct sess *sp,
-	const char *iamAddress,
-	const char *method,
-	const char *contentMD5,
-	const char *contentType,
-	const char *CanonicalizedAmzHeaders,
-	const char *CanonicalizedResource,
-	double date
-
-){
-
-	time_t localtime;
-	localtime = time(NULL);
-	if(difftime(aws_expiration, localtime) < 0) {
-		// credentials are still valid
-		if(aws_accessKeyId != NULL && aws_secretAccessKey != NULL) {
-			vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, 
-					method, contentMD5, contentType, 
-					CanonicalizedAmzHeaders, CanonicalizedResource, 
-					date);
-			return;
-		}
-	} 
-
-
-	CURL *curl;
-	// HEAD request to get file length
-	double length = -1;
-        curl = curl_easy_init();
-        if(curl) {            
-                curl_easy_setopt(curl, CURLOPT_URL, iamAddress);
-                curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);                
-
-                if(curl_easy_perform(curl) == CURLE_OK) {
-			if(curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &length) != CURLE_OK){
-				length = -1;
-			}
-		}
-                curl_easy_cleanup(curl);
-        }
-
-
-	if(length <= 0) {
-		return;
-	}
-
-	char* response = malloc(((long)length)+1);
-	if(response == NULL){
-		return;
+	char *adr = strchr(requrl, (int)'?');
+	if(adr == NULL){
+		sprintf(pcanonical_request,"%s\n%s\n\n%s\n%s\n%s",
+			method,
+			requrl,
+			pcanonical_headers,
+			psigned_headers,
+			payload_hash
+		);
+	}else{
+		sprintf(ptmpform,"%s.%lds\n%s","%s\n%",(adr - requrl),"%s\n%s\n%s\n%s");
+		sprintf(pcanonical_request,ptmpform,
+			method,
+			requrl,
+			adr + 1,
+			pcanonical_headers,
+			psigned_headers,
+			payload_hash
+		);
 	}
 	
-	curl_data_t data = {
-		.buf = response,
-		.pos = 0
-	};
+	
+	////////////////
+	//create string_to_sign
+	char string_to_sign[196];
+	string_to_sign[0]=0;
+	char *pstring_to_sign=&string_to_sign;
+	sprintf(pstring_to_sign,"AWS4-HMAC-SHA256\n%s\n%s\n%s",amzdate,pcredential_scope,vmod_hash_sha256(sp, pcanonical_request));
+	
+	////////////////
+	//create signature
+	char *signature = vmod_v4_getSignature(sp,secret_key,datestamp,region,service,pstring_to_sign);
 
-	// GET request to receive data
-	curl = curl_easy_init();
-	if(curl) {            
-		curl_easy_setopt(curl, CURLOPT_URL, iamAddress);
-		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function_pt);
-		curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
-	}
+	////////////////
+	//create authorization
+	char authorization[512];
+	authorization[0]=0;
+	char *pauthorization=&authorization;
+	
+	sprintf(pauthorization,"AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+		access_key,
+		pcredential_scope,
+		psigned_headers,
+		signature);
+	
+	////////////////
+	//Set to header
+	VRT_SetHdr(sp, where, "\016Authorization:"        , pauthorization , vrt_magic_string_end);
+	VRT_SetHdr(sp, where, "\025x-amz-content-sha256:" , payload_hash , vrt_magic_string_end);
+	VRT_SetHdr(sp, where, "\013x-amz-date:"           , amzdate , vrt_magic_string_end);
 
-	struct json_object *resp_obj;
-	struct json_object *key_id;
-	struct json_object *access_key;
-	struct json_object *expiration_date;
+	
 
-	/*  sample response
-	 * {
-	 * "Code" : "Success",
-	 * "LastUpdated" : "2012-12-18T17:38:13Z",
-	 * "Type" : "AWS-HMAC",
-	 * "AccessKeyId" : "ASI...",
-	 * "SecretAccessKey" : "Z8vv...",
-	 * "Token" : "AQoD...",
-	 * "Expiration" : "2012-12-19T00:13:24Z"
-	 * }
-	 */
-
-	resp_obj = json_tokener_parse(response);
-	key_id = json_object_object_get(resp_obj, "AccessKeyId");
-	access_key = json_object_object_get(resp_obj, "SecretAccessKey");
-	expiration_date = json_object_object_get(resp_obj, "Expiration");
-
-	struct tm tm;
-	memset(&tm, 0, sizeof(struct tm));
-	strptime(expiration_date, "%Y-%m-%dT%H:%M:%SZ", &tm);
-	time_t expiration = mktime(&tm);
-
-	aws_accessKeyId = json_object_get_string(key_id);
-	aws_secretAccessKey = json_object_get_string(access_key);
-	aws_expiration = expiration;	
-
-	free(response);
-
-	vmod_s3_generic(sp, aws_accessKeyId, aws_secretAccessKey, method, contentMD5, contentType, CanonicalizedAmzHeaders, CanonicalizedResource, date);
 }
-
 
 const char*
 vmod_lf(struct sess *sp){

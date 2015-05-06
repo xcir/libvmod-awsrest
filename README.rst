@@ -7,8 +7,8 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Syohei Tanaka(@xcir)
-:Date: 2013-01-14
-:Version: 0.2
+:Date: 2015-05-06
+:Version: 0.3
 :Manual section: 3
 
 SYNOPSIS
@@ -28,97 +28,76 @@ ref: http://docs.amazonwebservices.com/AmazonS3/latest/dev/Redirects.html
 FUNCTIONS
 ============
 
-s3_generic
+v4_generic
 ------------------
 
 Prototype
         ::
 
-                s3_generic(
-                    STRING accesskey,
-                    STRING secret,
-                    STRING method,
-                    STRING contentMD5,
-                    STRING contentType,
-                    STRING CanonicalizedAmzHeaders,
-                    STRING CanonicalizedResource,
-                    TIME date)
+                v4_generic(
+                    STRING service,               // [s3]
+                    STRING region,                // [ap-northeast-1]
+                    STRING access_key,            // [your access key]
+                    STRING secret_key,            // [your secret key]
+                    STRING signed_headers,        // [host;]                                   x-amz-content-sha256;x-amz-date is appended by default.
+                    STRING canonical_headers,     // [host:s3-ap-northeast-1.amazonaws.com\n]
+                    BOOL   feature                // [false]                                   reserved param(for varnish4)
+                    )
 Return value
 	VOID
 Description
-	generate Authorization header for AWS REST API.(set to req.http.Date and req.http.Authorization)
-Example
+	generate Authorization/x-amz-date/x-amz-content-sha256 header for AWS REST API.
+Example(set to req.*)
         ::
 
                 import awsrest;
                 
                 backend default {
-                  .host = "s3.amazonaws.com";
-                  .port = "80";
+                  .host = "s3-ap-northeast-1.amazonaws.com";
                 }
                 
                 sub vcl_recv{
-                  awsrest.s3_generic(
-                  "accessKey",            //AWSAccessKeyId
-                  "secretKey",            //SecretAccessKeyID
-                  req.request,            //HTTP-Verb
-                  req.http.content-md5,   //Content-MD5
-                  req.http.content-type,  //Content-Type
-                  "",                     //canonicalizedAmzHeaders
-                  req.url,                //canonicalizedResource
-                  now                     //Date
+                  awsrest.v4_generic(
+                      "s3",
+                      "ap-northeast-1",
+                      "accessKey",
+                      "secretKey",
+                      "host;",
+                      "host:" + req.http.host + awsrest.lf(),
+                      false
                   );
                 }
-
-
+                
                 //data
-                15 TxHeader     b Date: Tue, 03 Jul 2012 16:21:47 +0000
-                15 TxHeader     b Authorization: AWS accessKey:XUfSbQDuOWL24PTR1qavWSr6vjM=
-
-s3_generic_iam(EXPERIMENTAL)
-------------------------------
-
-Prototype
-        ::
-
-                s3_generic_iam(
-                    STRING iamAddress,
-                    STRING method,
-                    STRING contentMD5,
-                    STRING contentType,
-                    STRING CanonicalizedAmzHeaders,
-                    STRING CanonicalizedResource,
-                    TIME date)
-Return value
-	VOID
-Description
-	generate Authorization header for AWS REST API.(set to req.http.Date and req.http.Authorization)
-Example
+                //13 TxHeader     b Authorization: AWS4-HMAC-SHA256 Credential=******/20150506/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=******
+                //13 TxHeader     b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //13 TxHeader     b x-amz-date: 20150506T092703Z
+                
+Example(set to bereq.*)
         ::
 
                 import awsrest;
                 
                 backend default {
-                  .host = "s3.amazonaws.com";
-                  .port = "80";
+                  .host = "s3-ap-northeast-1.amazonaws.com";
                 }
                 
-                sub vcl_recv{
-                  awsrest.s3_generic_iam(
-                  "http://169.254.169.254/latest/meta-data/iam/security-credentials/role-name",            //AWS-IAM URL see http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances
-                  req.request,            //HTTP-Verb
-                  req.http.content-md5,   //Content-MD5
-                  req.http.content-type,  //Content-Type
-                  "",                     //canonicalizedAmzHeaders
-                  req.url,                //canonicalizedResource
-                  now                     //Date
+                sub vcl_miss{
+                  awsrest.v4_generic(
+                      "s3",
+                      "ap-northeast-1",
+                      "accessKey",
+                      "secretKey",
+                      "host;",
+                      "host:" + bereq.http.host + awsrest.lf(),
+                      false
                   );
                 }
-
-
                 //data
-                15 TxHeader     b Date: Tue, 03 Jul 2012 16:21:47 +0000
-                15 TxHeader     b Authorization: AWS accessKey:XUfSbQDuOWL24PTR1qavWSr6vjM=
+                //13 TxHeader     b Authorization: AWS4-HMAC-SHA256 Credential=******/20150506/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=******
+                //13 TxHeader     b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //13 TxHeader     b x-amz-date: 20150506T093008Z
+
 
 
 lf
@@ -175,13 +154,16 @@ Version 0.1: add s3_generic() , lf() method
 
 Version 0.2: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
 
+Version 0.3: Support V4 Signature.
+             Delete method for v1 signature.
+
 COPYRIGHT
 =============
 
 This document is licensed under the same license as the
-libvmod-rewrite project. See LICENSE for details.
+libvmod-awsrest project. See LICENSE for details.
 
-* Copyright (c) 2012 Syohei Tanaka(@xcir)
+* Copyright (c) 2015 Syohei Tanaka(@xcir)
 
 File layout and configuration based on libvmod-example
 
