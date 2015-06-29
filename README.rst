@@ -8,7 +8,8 @@ Varnish AWS REST API module
 
 :Author: Shohei Tanaka(@xcir)
 :Date: 2015-05-06
-:Version: 0.3
+:Version: 0.3-varnish30
+:Support Varnish Version: 3.0.x
 :Manual section: 3
 
 SYNOPSIS
