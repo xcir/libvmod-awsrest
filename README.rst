@@ -7,24 +7,24 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2015-05-06
-:Version: 0.3-varnish30
-:Support Varnish Version: 3.0.x
+:Date: 2015-07-04
+:Version: 0.4-varnish40
+:Support Varnish Version: 4.0.x
 :Manual section: 3
 
 SYNOPSIS
-===========
+========
 
 import awsrest;
 
+For Varnish3.0.x
+=================
+
+See this link.
+https://github.com/xcir/libvmod-awsrest/tree/varnish30
+
 DESCRIPTION
-==============
-
-ATTENTION
-==============
-Attention to 307 Temporary Redirect.
-
-ref: http://docs.amazonwebservices.com/AmazonS3/latest/dev/Redirects.html
+===========
 
 FUNCTIONS
 ============
@@ -61,8 +61,8 @@ Example(set to req.*)
                   awsrest.v4_generic(
                       "s3",
                       "ap-northeast-1",
-                      "accessKey",
-                      "secretKey",
+                      "[Your Access Key]",
+                      "[Your Secret Key]",
                       "host;",
                       "host:" + req.http.host + awsrest.lf(),
                       false
@@ -70,9 +70,10 @@ Example(set to req.*)
                 }
                 
                 //data
-                //13 TxHeader     b Authorization: AWS4-HMAC-SHA256 Credential=******/20150506/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=******
-                //13 TxHeader     b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                //13 TxHeader     b x-amz-date: 20150506T092703Z
+
+                //2 ReqHeader      c Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //2 ReqHeader      c x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //2 ReqHeader      c x-amz-date: 20150704T103402Z
                 
 Example(set to bereq.*)
         ::
@@ -83,21 +84,21 @@ Example(set to bereq.*)
                   .host = "s3-ap-northeast-1.amazonaws.com";
                 }
                 
-                sub vcl_miss{
+                sub vcl_backend_fetch{
                   awsrest.v4_generic(
                       "s3",
                       "ap-northeast-1",
-                      "accessKey",
-                      "secretKey",
+                      "[Your Access Key]",
+                      "[Your Secret Key]",
                       "host;",
                       "host:" + bereq.http.host + awsrest.lf(),
                       false
                   );
                 }
                 //data
-                //13 TxHeader     b Authorization: AWS4-HMAC-SHA256 Credential=******/20150506/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=******
-                //13 TxHeader     b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                //13 TxHeader     b x-amz-date: 20150506T093008Z
+                //25 BereqHeader    b Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //25 BereqHeader    b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //25 BereqHeader    b x-amz-date: 20150704T103159Z
 
 
 
@@ -122,41 +123,55 @@ Example
                 x-amz-hoge1:hoge
                 x-amz-hoge2:hoge
 
-
 INSTALLATION
-==================
+============
 
-Installation requires Varnish source tree.
+The source tree is based on autotools to configure the building, and
+does also have the necessary bits in place to do functional unit tests
+using the ``varnishtest`` tool.
+
+Building requires the Varnish header files and uses pkg-config to find
+the necessary paths.
 
 Usage::
 
  ./autogen.sh
- ./configure VARNISHSRC=DIR [VMODDIR=DIR]
+ ./configure
 
-`VARNISHSRC` is the directory of the Varnish source tree for which to
-compile your vmod. Both the `VARNISHSRC` and `VARNISHSRC/include`
-will be added to the include search paths for your module.
+If you have installed Varnish to a non-standard directory, call
+``autogen.sh`` and ``configure`` with ``PKG_CONFIG_PATH`` pointing to
+the appropriate path. For awsrest, when varnishd configure was called
+with ``--prefix=$PREFIX``, use
 
-Optionally you can also set the vmod install directory by adding
-`VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
-Varnish installation).
+ PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
+ export PKG_CONFIG_PATH
 
 Make targets:
 
-* make - builds the vmod
-* make install - installs your vmod in `VMODDIR`
+* make - builds the vmod.
+* make install - installs your vmod.
 * make check - runs the unit tests in ``src/tests/*.vtc``
+* make distcheck - run check and prepare a tarball of the vmod.
 
+
+COMMON PROBLEMS
+===============
+
+* configure: error: Need varnish.m4 -- see README.rst
+
+  Check if ``PKG_CONFIG_PATH`` has been set correctly before calling
+  ``autogen.sh`` and ``configure``
 
 HISTORY
 ===========
 
-Version 0.1: add s3_generic() , lf() method
+Version 0.4-varnish40: Support Varnish4.0.x
 
-Version 0.2: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
+Version 0.3-varnish30: Support V4 Signature. Delete method for v1 signature.
 
-Version 0.3: Support V4 Signature.
-             Delete method for v1 signature.
+Version 0.2-varnish30: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
+
+Version 0.1-varnish30: add s3_generic() , lf() method
 
 COPYRIGHT
 =============
@@ -171,6 +186,3 @@ File layout and configuration based on libvmod-example
 * Copyright (c) 2011 Varnish Software AS
 
 hmac-sha1 and base64 based on libvmod-digest( https://github.com/varnish/libvmod-digest )
-
-main logic based on  http://www.applelife100.com/2012/06/23/using-rest-api-of-amazon-s3-in-php-1/
-

@@ -6,7 +6,7 @@ Makefile.in
 *.lo
 *.la
 *~
-vmod_awsrest.3
+*.[1-9]
 
 /aclocal.m4
 /autom4te.cache/
@@ -24,7 +24,8 @@ vmod_awsrest.3
 /ltmain.sh
 /missing
 /stamp-h1
-/m4/*.m4
+/m4/
 
 /src/vcc_if.c
 /src/vcc_if.h
+/src/vmod_*rst
