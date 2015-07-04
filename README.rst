@@ -8,7 +8,7 @@ Varnish AWS REST API module
 
 :Author: Shohei Tanaka(@xcir)
 :Date: 2015-07-04
-:Version: 0.3-varnish40
+:Version: 0.4-varnish40
 :Support Varnish Version: 4.0.x
 :Manual section: 3
 
@@ -161,3 +161,28 @@ COMMON PROBLEMS
 
   Check if ``PKG_CONFIG_PATH`` has been set correctly before calling
   ``autogen.sh`` and ``configure``
+
+HISTORY
+===========
+
+Version 0.4-varnish40: Support Varnish4.0.x
+
+Version 0.3-varnish30: Support V4 Signature. Delete method for v1 signature.
+
+Version 0.2-varnish30: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
+
+Version 0.1-varnish30: add s3_generic() , lf() method
+
+COPYRIGHT
+=============
+
+This document is licensed under the same license as the
+libvmod-awsrest project. See LICENSE for details.
+
+* Copyright (c) 2015 Shohei Tanaka(@xcir)
+
+File layout and configuration based on libvmod-example
+
+* Copyright (c) 2011 Varnish Software AS
+
+hmac-sha1 and base64 based on libvmod-digest( https://github.com/varnish/libvmod-digest )
