@@ -20,6 +20,7 @@ Example VMOD
 %setup -n libvmod-awsrest-%{version}
 
 %build
+./autogen.sh
 %configure --prefix=/usr/
 %{__make} %{?_smp_mflags}
 %{__make} %{?_smp_mflags} check
