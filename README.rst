@@ -153,14 +153,6 @@ Make targets:
 * make check - runs the unit tests in ``src/tests/*.vtc``
 * make distcheck - run check and prepare a tarball of the vmod.
 
-In your VCL you could then use this vmod along the following lines::
-
-        import awsrest;
-
-        sub vcl_deliver {
-                # This sets resp.http.hello to "Hello, World"
-                set resp.http.hello = awsrest.hello("World");
-        }
 
 COMMON PROBLEMS
 ===============
