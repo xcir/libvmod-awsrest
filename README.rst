@@ -162,6 +162,49 @@ COMMON PROBLEMS
   Check if ``PKG_CONFIG_PATH`` has been set correctly before calling
   ``autogen.sh`` and ``configure``
 
+* If you catch signature error in several request
+
+  Please check that URI encoded.
+  AWS signature v4 is require URI-encode.
+   (ref: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html#d0e8062 )
+  This VMOD does not update be/req.url.
+  Because, can't detect URI-encoded or not.
+  
+  Sample(replace @ -> %40)::
+  
+   //////////////////////////
+   //In cl-thread.
+
+   sub vcl_recv{
+     set req.url = regsuball(req.url,"@","%40");
+     awsrest.v4_generic(
+       "s3",
+       "ap-northeast-1",
+       "[Your Access Key]",
+       "[Your Secret Key]",
+       "host;",
+       "host:" + req.http.host + awsrest.lf(),
+       false
+     );
+   }
+   //////////////////////////
+   //In bg-thread.
+
+   sub vcl_backend_fetch {
+     set bereq.url = regsuball(bereq.url,"@","%40");
+     awsrest.v4_generic(
+       "s3",
+       "ap-northeast-1",
+       "[Your Access Key]",
+       "[Your Secret Key]",
+       "host;",
+       "host:" + bereq.http.host + awsrest.lf(),
+       false
+     );
+   }
+
+
+
 HISTORY
 ===========
 
