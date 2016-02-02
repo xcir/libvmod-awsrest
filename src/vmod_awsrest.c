@@ -103,6 +103,218 @@ vmod_hash_sha256(const struct vrt_ctx *ctx, const char *msg)
 	}
 	return p;
 }
+
+static inline int
+param_compare(char *s, char *t)
+{
+    /* sort up to first =,&,\0 and past when keys equal */
+    /* must special-case '=' to avoid ascii sorting it */
+    for (; ((*s == *t) || *s == '=' || *t == '=' ||
+                ((*s == '\0' || *s == '&') &&
+                 (*t == '\0' || *t == '&'))
+                ); s++, t++) {
+        /* s and t end together */
+        if ((*s == '\0' || *s == '&') && (*t == '\0' || *t == '&'))
+            return 0;
+        /* s ends, t continues */
+        if (*s == '\0' || *s == '&')
+            return -1;
+        /* s continues, t ends */
+        if (*t == '\0' || *t == '&')
+            return 1;
+        /* s param ends, t param continues */
+        if (*s == '=' && *t != '=')
+            return -1;
+        /* s param continues, t param ends */
+        if (*s != '=' && *t == '=')
+            return 1;
+    }
+    return *s - *t;
+}
+
+static inline int
+param_copy(char *dst, char *src)
+{
+    int len;
+    char *val, *end;
+
+    /* param */
+    end = strpbrk(src, "&");
+    if (end == NULL)
+        end = src + strlen(src);
+
+    val = strpbrk(src, "=");
+    if (val == NULL || val > end)
+        val = end;
+    len = val - src;
+    memcpy(dst, src, len);
+    dst += len;
+
+    /* '=' is required by v4 sig */
+    *dst++ = '=';
+    ++len;
+
+    /* value */
+    val = strpbrk(src, "=");
+    if (val && val < end) {
+        val++;
+        memcpy(dst, val, end - val);
+        len += end - val;
+    }
+
+    return len;
+}
+
+/*
+ * sort query parameters according to AWS SIGv4 docs
+ * http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
+ */
+const char *
+vmod_awsv4_sort(const struct vrt_ctx *ctx, const char *url)
+{
+    char *qs = NULL;
+    int qs_cnt = 0;
+    char **params = NULL;
+    char *param = NULL;
+    int p_cnt = 0;
+    int p;
+    char *cp, *dst = NULL;
+
+    if (url == NULL)
+        return NULL;
+
+    /* Pass 1 - Count query params */
+    qs = strchr(url, '?');
+    if (qs == NULL)
+        return url;
+
+    while ((qs = strchr(qs, '&')) != NULL) {
+        ++qs;
+        ++qs_cnt;
+    }
+    params = (char **)WS_Alloc(ctx->ws, (qs_cnt + 1) * sizeof(const char *));
+    WS_Assert(ctx->ws);
+    bzero(params, (qs_cnt + 1) * sizeof(const char *));
+
+    /* Pass 2 - Sort query params */
+    qs = strchr(url, '?');
+    if (qs == NULL)
+        return url;
+
+    /* Add first param and increment */
+    params[p_cnt++] = ++qs;
+    while ((qs = strchr(qs, '&')) != NULL) {
+        param = ++qs;
+
+        for (p = 0; p < p_cnt; p++) {
+            if (param_compare(param, params[p]) < 0) {
+                for (int i = p_cnt; i > p; i--)
+                    params[i] = params[i - 1];
+                break;
+            }
+        }
+        params[p] = param;
+        p_cnt++;
+    }
+
+    /* Allocate and write sorted query params, resetting qs */
+    dst = WS_Alloc(ctx->ws, (strlen(url) + p_cnt + 1) * sizeof(char));
+    WS_Assert(ctx->ws);
+    qs = strchr(url, '?');
+    cp = memcpy(dst, url, (qs - url) + 1) + (qs - url + 1);
+
+    for (p = 0; p < p_cnt; p++) {
+        /* ignore empty params which sort early */
+        if (params[p][0] == '\0' || params[p][0] == '&')
+            continue;
+        cp += param_copy(cp, params[p]);
+        if (p < p_cnt - 1)
+            *cp++ = '&';
+        else
+            *cp++ = '\0';
+    }
+
+    return dst;
+}
+
+/*
+ * Callback to process request body for payload hashing
+ */
+static int __match_proto__(req_body_iter_f)
+vcb_processbody(struct req *req, void *priv, void *ptr, size_t len)
+{
+    char **last = priv;
+    char *prev = "";
+
+    if (last == NULL)
+        return 0;
+
+    if (*last)
+        prev = *last;
+
+    *last = WS_Printf(req->ws, "%s%.*s", prev, (int)len, (const char *)ptr);
+    return 0;
+}
+
+/*
+ * Normalize URI paths according to RFC 3986 by removing redundant and relative
+ * path components. Each path segment must be URI-encoded.
+ */
+static char hexchars[] = "0123456789ABCDEF";
+#define visalpha(c) \
+    ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+#define visalnum(c) \
+    ((c >= '0' && c <= '9') || visalpha(c))
+#define uri_unreserved(c) \
+    (c == '-' || c == '.' || c == '_' || c == '~')
+#define uri_path_delims(c) \
+    (c == '/')
+
+static const char *
+vmod_encode(const struct vrt_ctx *ctx, const char *str, size_t enclen)
+{
+    const char *start = str;
+    char *b, *e;
+    unsigned u;
+
+    CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+    CHECK_OBJ_NOTNULL(ctx->ws, WS_MAGIC);
+    u = WS_Reserve(ctx->ws, 0);
+    e = b = ctx->ws->f;
+    e += u;
+    /* encode up to enclen */
+    while (b < e && str && *str && str < start + enclen) {
+        if (visalnum((int) *str) || uri_unreserved((int) *str)
+                || uri_path_delims(*str)) {
+            /* RFC3986 2.3 */
+            *b++ = *str++;
+        } else if (b + 4 >= e) { /* % hex hex NULL */
+            b = e; /* not enough space */
+        } else {
+            *b++ = '%';
+            unsigned char foo = *str;
+            *b++ = hexchars[foo >> 4];
+            *b++ = hexchars[*str & 15];
+            str++;
+        }
+    }
+    /* copy rest of url without encoding */
+    while (b < e && str && *str)
+        *b++ = *str++;
+    if (b < e)
+        *b = '\0';
+    b++;
+    if (b > e) {
+        WS_Release(ctx->ws, 0);
+        return (NULL);
+    } else {
+        e = b;
+        b = ctx->ws->f;
+        WS_Release(ctx->ws, e - b);
+        return (b);
+    }
+}
+
 void vmod_v4_generic(const struct vrt_ctx *ctx,
 	VCL_STRING service,               //= 's3';
 	VCL_STRING region,                //= 'ap-northeast-1';
@@ -116,8 +328,8 @@ void vmod_v4_generic(const struct vrt_ctx *ctx,
 	
 	////////////////
 	//get data
-	char *method;
-	char *requrl;
+	const char *method;
+	const char *requrl, *origurl;
 	struct http *hp;
 	struct gethdr_s gs;
 	
@@ -131,7 +343,19 @@ void vmod_v4_generic(const struct vrt_ctx *ctx,
 		gs.where = HDR_REQ;
 	}
 	method= hp->hd[HTTP_HDR_METHOD].b;
-	requrl= hp->hd[HTTP_HDR_URL].b;
+    origurl = hp->hd[HTTP_HDR_URL].b;
+
+    /* request url must be escaped and query sorted */
+    const char *encurl;
+    char *qs = strchr(origurl, '?');
+    size_t url_len;
+    if (qs)
+        url_len = qs - origurl;
+    else
+        url_len = strlen(origurl);
+    encurl = vmod_encode(ctx, origurl, url_len);
+    requrl = vmod_awsv4_sort(ctx, encurl);
+    VSLb(ctx->vsl, SLT_Debug, "v4sig url: %s", requrl);
 
 	////////////////
 	//create date
@@ -157,9 +381,19 @@ void vmod_v4_generic(const struct vrt_ctx *ctx,
 		gmtm->tm_mday
 	);
 
+    /* hash POST data if present */
+    char *payload = NULL;
+    if (ctx->req) {
+        /* must cache req body to allow hash and send to backend */
+        VRT_CacheReqBody(ctx, 1024);
+        VRB_Iterate(ctx->req, vcb_processbody, &payload);
+    }
+    if (payload == NULL)
+        payload = "";
+
 	////////////////
 	//create payload
-	const char * payload_hash = vmod_hash_sha256(ctx, "");
+	const char * payload_hash = vmod_hash_sha256(ctx, payload);
 	
 	////////////////
 	//create signed headers
