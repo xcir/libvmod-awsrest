@@ -385,7 +385,7 @@ void vmod_v4_generic(const struct vrt_ctx *ctx,
     char *payload = NULL;
     if (ctx->req) {
         /* must cache req body to allow hash and send to backend */
-        VRT_CacheReqBody(ctx, 1024);
+        VRT_CacheReqBody(ctx, 10*1024*1024);
         VRB_Iterate(ctx->req, vcb_processbody, &payload);
     }
     if (payload == NULL)
