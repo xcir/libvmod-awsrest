@@ -1,4 +1,4 @@
 $Module awsrest 3 Varnish AWS RESP API module
-$Init init_function
+$Event init_function
 $Function VOID v4_generic(STRING,STRING,STRING,STRING,STRING,STRING,BOOL)
 $Function STRING lf()
