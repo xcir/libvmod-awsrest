@@ -58,6 +58,7 @@ Example(set to req.*)
                 }
                 
                 sub vcl_recv{
+                  set req.http.host = "s3-ap-northeast-1.amazonaws.com";
                   awsrest.v4_generic(
                       "s3",
                       "ap-northeast-1",
@@ -85,6 +86,7 @@ Example(set to bereq.*)
                 }
                 
                 sub vcl_backend_fetch{
+                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
                   awsrest.v4_generic(
                       "s3",
                       "ap-northeast-1",
