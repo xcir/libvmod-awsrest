@@ -116,8 +116,8 @@ void vmod_v4_generic(const struct vrt_ctx *ctx,
 	
 	////////////////
 	//get data
-	char *method;
-	char *requrl;
+	const char *method;
+	const char *requrl;
 	struct http *hp;
 	struct gethdr_s gs;
 	
