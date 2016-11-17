@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "vcl.h"
 #include "vrt.h"
 #include "cache/cache.h"
 
@@ -15,8 +16,9 @@
 
 
 int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
+init_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
+
 	return (0);
 }
 
