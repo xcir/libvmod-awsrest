@@ -7,9 +7,9 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2015-07-04
-:Version: 0.4-varnish40
-:Support Varnish Version: 4.0.x
+:Date: 2016-11-19
+:Version: 50.5
+:Support Varnish Version: 4.1.x, 5.0.x
 :Manual section: 3
 
 SYNOPSIS
@@ -22,6 +22,12 @@ For Varnish3.0.x
 
 See this link.
 https://github.com/xcir/libvmod-awsrest/tree/varnish30
+
+For Varnish4.0.x
+=================
+
+See this link.
+https://github.com/xcir/libvmod-awsrest/tree/varnish40
 
 DESCRIPTION
 ===========
@@ -208,6 +214,8 @@ COMMON PROBLEMS
 
 HISTORY
 ===========
+
+Version 0.5-varnish50: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
 
 Version 0.4-varnish40: Support Varnish4.0.x
 
