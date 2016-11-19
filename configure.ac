@@ -76,8 +76,14 @@ AC_PATH_PROG([VARNISHTEST], [varnishtest], [],
 AC_PATH_PROG([VARNISHD], [varnishd], [],
     [$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
 
+
+AC_SUBST([VARNISH_VERSION], [$($PKG_CONFIG --modversion varnishapi)])
+
 AC_CONFIG_FILES([
+	debian/control
 	Makefile
 	src/Makefile
+	vmod-awsrest.spec
 ])
 AC_OUTPUT
+
