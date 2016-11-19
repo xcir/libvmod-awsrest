@@ -167,8 +167,7 @@ COMMON PROBLEMS
 * If you catch signature error in several request
 
   Please check that URI encoded.
-  AWS signature v4 is require URI-encode.
-   (ref: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html#d0e8062 )
+  AWS signature v4 is require URI-encode. (ref: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html#d0e8062 )
   This VMOD does not update be/req.url.
   Because, can't detect URI-encoded or not.
   
