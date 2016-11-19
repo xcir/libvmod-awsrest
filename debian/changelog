@@ -1,3 +1,9 @@
+libvmod-awsrest (50.5) unstable; urgency=low
+
+  * Support Varnish4.1.x / Varnish5.0.x
+
+ -- xcir <xcir@varnish41-1>  Sun, 20 Nov 2016 00:38:03 +0900
+
 libvmod-awsrest (0.4) unstable; urgency=low
 
   * Support Varnish4.0.x

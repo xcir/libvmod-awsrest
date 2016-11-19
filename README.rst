@@ -215,7 +215,7 @@ COMMON PROBLEMS
 HISTORY
 ===========
 
-Version 0.5-varnish50: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
+Version 50.5: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
 
 Version 0.4-varnish40: Support Varnish4.0.x
 
@@ -231,7 +231,7 @@ COPYRIGHT
 This document is licensed under the same license as the
 libvmod-awsrest project. See LICENSE for details.
 
-* Copyright (c) 2015 Shohei Tanaka(@xcir)
+* Copyright (c) 2016 Shohei Tanaka(@xcir)
 
 File layout and configuration based on libvmod-example
 
