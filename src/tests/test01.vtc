@@ -16,6 +16,7 @@ varnish v1 -vcl+backend {
 			"ap-northeast-1",
 			"[Your Access Key]",
 			"[Your Secret Key]",
+      "",
 			"host;",
 			"host:" + req.http.host + awsrest.lf(),
 			false
@@ -23,6 +24,9 @@ varnish v1 -vcl+backend {
 		if(req.http.Authorization){
 			set req.http.x-req = "1";
 		}
+    if(!req.http.x-amz-security-token){
+      set req.http.x-req-security-token = "1";
+    }
 	}
 	sub vcl_backend_fetch{
 		unset bereq.http.Authorization;
@@ -31,6 +35,7 @@ varnish v1 -vcl+backend {
 			"ap-northeast-1",
 			"[Your Access Key]",
 			"[Your Secret Key]",
+      "",
 			"host;",
 			"host:" + bereq.http.host + awsrest.lf(),
 			false
@@ -38,7 +43,9 @@ varnish v1 -vcl+backend {
 		if(bereq.http.Authorization){
 			set bereq.http.x-bereq = "1";
 		}
-
+    if(!bereq.http.x-amz-security-token){
+      set bereq.http.x-bereq-security-token = "1";
+    }
 	}
 } -start
 
