@@ -46,6 +46,7 @@ Prototype
                     STRING region,                // [ap-northeast-1]
                     STRING access_key,            // [your access key]
                     STRING secret_key,            // [your secret key]
+                    STRING session_token,         // [your session token (optional)]
                     STRING signed_headers,        // [host;]                                   x-amz-content-sha256;x-amz-date is appended by default.
                     STRING canonical_headers,     // [host:s3-ap-northeast-1.amazonaws.com\n]
                     BOOL   feature                // [false]                                   reserved param(for varnish4)
@@ -70,6 +71,7 @@ Example(set to req.*)
                       "ap-northeast-1",
                       "[Your Access Key]",
                       "[Your Secret Key]",
+                      "",
                       "host;",
                       "host:" + req.http.host + awsrest.lf(),
                       false
@@ -98,6 +100,7 @@ Example(set to bereq.*)
                       "ap-northeast-1",
                       "[Your Access Key]",
                       "[Your Secret Key]",
+                      "",
                       "host;",
                       "host:" + bereq.http.host + awsrest.lf(),
                       false
@@ -108,6 +111,33 @@ Example(set to bereq.*)
                 //25 BereqHeader    b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
                 //25 BereqHeader    b x-amz-date: 20150704T103159Z
 
+Example(using session token)
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "s3-ap-northeast-1.amazonaws.com";
+                }
+                
+                sub vcl_backend_fetch{
+                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  awsrest.v4_generic(
+                      "s3",
+                      "ap-northeast-1",
+                      "[Your Access Key]",
+                      "[Your Secret Key]",
+                      "[Your Session Token]",
+                      "host;",
+                      "host:" + bereq.http.host + awsrest.lf(),
+                      false
+                  );
+                }
+                //data
+                //25 BereqHeader    b Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //25 BereqHeader    b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //25 BereqHeader    b x-amz-date: 20150704T103159Z
+                //25 BereqHeader    b x-amz-security-token: [Your Session Token]
 
 
 lf
@@ -189,6 +219,7 @@ COMMON PROBLEMS
        "ap-northeast-1",
        "[Your Access Key]",
        "[Your Secret Key]",
+       "",
        "host;",
        "host:" + req.http.host + awsrest.lf(),
        false
@@ -204,6 +235,7 @@ COMMON PROBLEMS
        "ap-northeast-1",
        "[Your Access Key]",
        "[Your Secret Key]",
+       "",
        "host;",
        "host:" + bereq.http.host + awsrest.lf(),
        false
