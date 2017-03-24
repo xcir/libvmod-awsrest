@@ -1,0 +1,57 @@
+varnishtest "awsrest"
+
+server s1 {
+	rxreq
+	expect req.http.x-req-security-token == "req-token"
+	expect req.http.x-bereq-security-token == "bereq-token"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import awsrest from "${vmod_topbuild}/src/.libs/libvmod_awsrest.so";
+
+	sub vcl_recv {
+		awsrest.v4_generic(
+			"s3",
+			"ap-northeast-1",
+			"[Your Access Key]",
+			"[Your Secret Key]",
+      "req-token",
+			"host;",
+			"host:" + req.http.host + awsrest.lf(),
+			false
+		);
+		if(req.http.Authorization){
+			set req.http.x-req = "1";
+		}
+    if(req.http.x-amz-security-token){
+      set req.http.x-req-security-token = req.http.x-amz-security-token;
+    }
+	}
+	sub vcl_backend_fetch{
+		unset bereq.http.Authorization;
+		awsrest.v4_generic(
+			"s3",
+			"ap-northeast-1",
+			"[Your Access Key]",
+			"[Your Secret Key]",
+      "bereq-token",
+			"host;",
+			"host:" + bereq.http.host + awsrest.lf(),
+			false
+		);
+		if(bereq.http.Authorization){
+			set bereq.http.x-bereq = "1";
+		}
+    if(bereq.http.x-amz-security-token){
+      set bereq.http.x-bereq-security-token = bereq.http.x-amz-security-token;
+    }
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+}
+
+client c1 -run
