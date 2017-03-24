@@ -164,23 +164,24 @@ void vmod_v4_generic(VRT_CTX,
 	
 	////////////////
 	//create signed headers
-	size_t len = strlen(_signed_headers) + 32;
   size_t tokenlen = 0;
-  // Account for the addition of ";x-amz-security-token"
-  if(token != NULL) tokenlen = 21;
-	char *psigned_headers = WS_Alloc(ctx->ws,len+tokenlen);
-  char *psigned_headers_token = WS_Alloc(ctx->ws,tokenlen);
-  if(token != NULL) sprintf(psigned_headers_token,";x-amz-security-token");
+  if(token != NULL) tokenlen = strlen(token);
+
+	size_t len = strlen(_signed_headers) + 32;
+  if(tokenlen > 0) len += 21; // ;x-amz-security-token
+	char *psigned_headers = WS_Alloc(ctx->ws,len);
+  char *psigned_headers_token = WS_Alloc(ctx->ws,21+tokenlen);
+  if(tokenlen > 0) sprintf(psigned_headers_token,";x-amz-security-token");
 	sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date%s",_signed_headers,psigned_headers_token);
 	
 	////////////////
 	//create canonical headers
 	len = strlen(_canonical_headers) + 115;
   // Account for addition of "x-amz-security-token:[token]\n"
-  if(token != NULL) tokenlen = 22 + strlen(token);
-  char *pcanonical_token_header = WS_Alloc(ctx->ws,tokenlen);
+  if(tokenlen > 0) len += 22;
+  char *pcanonical_token_header = WS_Alloc(ctx->ws,22+tokenlen);
 	char *pcanonical_headers = WS_Alloc(ctx->ws,len+tokenlen);
-  if(token != NULL) sprintf(pcanonical_token_header,"x-amz-security-token:%s\n",token);
+  if(token > 0) sprintf(pcanonical_token_header,"x-amz-security-token:%s\n",token);
 	sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n%s",_canonical_headers,payload_hash,amzdate,pcanonical_token_header);
 	
 	////////////////
@@ -248,7 +249,7 @@ void vmod_v4_generic(VRT_CTX,
 	VRT_SetHdr(ctx, &gs , payload_hash , vrt_magic_string_end);
 	gs.what = "\013x-amz-date:";
 	VRT_SetHdr(ctx, &gs           , amzdate , vrt_magic_string_end);
-  if(token != NULL){
+  if(tokenlen > 0){
     gs.what="\025x-amz-security-token:";
     VRT_SetHdr(ctx, &gs, token, vrt_magic_string_end);
   }
