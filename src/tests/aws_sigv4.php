@@ -1,7 +1,9 @@
 <?php
 //base http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
 //AWS署名v4テスト用
-
+//
+//  php aws_sigv4.php [access_key] [secret_key] [url] [session_token(option)]
+//
 function hash_sha256_raw($msg, $key)
 {
     return hash_hmac("sha256", $msg, $key, true);
