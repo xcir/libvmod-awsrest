@@ -170,19 +170,23 @@ void vmod_v4_generic(VRT_CTX,
 	size_t len = strlen(_signed_headers) + 32;
 	if(tokenlen > 0) len += 21; // ;x-amz-security-token
 	char *psigned_headers = WS_Alloc(ctx->ws,len);
-	char *psigned_headers_token = WS_Alloc(ctx->ws,21+tokenlen);
-	if(tokenlen > 0) sprintf(psigned_headers_token,";x-amz-security-token");
-	sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date%s",_signed_headers,psigned_headers_token);
+	if(tokenlen > 0) {
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",_signed_headers);
+	} else {
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
+	}
 	
 	////////////////
 	//create canonical headers
 	len = strlen(_canonical_headers) + 115;
 	// Account for addition of "x-amz-security-token:[token]\n"
-	if(tokenlen > 0) len += 22;
-	char *pcanonical_token_header = WS_Alloc(ctx->ws,22+tokenlen);
-	char *pcanonical_headers = WS_Alloc(ctx->ws,len+tokenlen);
-	if(token > 0) sprintf(pcanonical_token_header,"x-amz-security-token:%s\n",token);
-	sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n%s",_canonical_headers,payload_hash,amzdate,pcanonical_token_header);
+	if(tokenlen > 0) len += 22 + tokenlen;
+	char *pcanonical_headers = WS_Alloc(ctx->ws,len);
+	if(tokenlen > 0) {
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",_canonical_headers,payload_hash,amzdate,token);
+	} else {
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
+	}
 	
 	////////////////
 	//create credential scope
