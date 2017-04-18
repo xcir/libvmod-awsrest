@@ -2,7 +2,9 @@ varnishtest "awsrest"
 
 server s1 {
 	rxreq
+	expect req.http.x-req == "1"
 	expect req.http.x-req-security-token == "req-token"
+	expect req.http.x-bereq == "1"
 	expect req.http.x-bereq-security-token == "bereq-token"
 	txresp
 } -start
