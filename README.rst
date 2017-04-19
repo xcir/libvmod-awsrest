@@ -7,9 +7,9 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2016-11-19
-:Version: 50.5
-:Support Varnish Version: 4.1.x, 5.0.x
+:Date: 2017-04-19
+:Version: 50.6
+:Support Varnish Version: 4.1.x, 5.0.x, 5.1.x
 :Manual section: 3
 
 SYNOPSIS
@@ -246,6 +246,8 @@ COMMON PROBLEMS
 
 HISTORY
 ===========
+
+Version 51.6: Support session token. IMPORTANT: Added token parameter at v4_generic. [Thanks pullreq #20 dgoodlad]
 
 Version 50.5: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
 
