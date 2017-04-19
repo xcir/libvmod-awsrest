@@ -1,6 +1,6 @@
 varnishtest "awsrest"
 #
-# varnishtest -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] *.vtx
+# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] *.vtx
 #
 # token is very long.(over 256 byte)
 # But vtc macro's buffer is 256 byte.
@@ -10,16 +10,16 @@ varnishtest "awsrest"
 
 varnish v1 -vcl+backend {
 	import awsrest;
-	backend default {.host = "s3-ap-northeast-1.amazonaws.com";}
+	backend default {.host = "s3-${region}.amazonaws.com";}
 	sub vcl_recv {
 		set req.http.x-orgurl = req.url;
 		set req.url           = "${url}";
-		set req.http.host     = "s3-ap-northeast-1.amazonaws.com";
+		set req.http.host     = "s3-${region}.amazonaws.com";
 		
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
 				"s3",
-				"ap-northeast-1",
+				"${region}",
 				"${accesskey}",
 				"${secretkey}",
 				"${token1}${token2}",
@@ -35,7 +35,7 @@ varnish v1 -vcl+backend {
 			unset bereq.http.Authorization;
 			awsrest.v4_generic(
 				"s3",
-				"ap-northeast-1",
+				"${region}",
 				"${accesskey}",
 				"${secretkey}",
 				"${token1}${token2}",
