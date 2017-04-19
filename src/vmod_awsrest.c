@@ -110,12 +110,11 @@ void vmod_v4_generic(VRT_CTX,
 	VCL_STRING region,                //= 'ap-northeast-1';
 	VCL_STRING access_key,            //= 'your access key';
 	VCL_STRING secret_key,            //= 'your secret key';
+	VCL_STRING token,                 //= 'optional session token';
 	VCL_STRING _signed_headers,       //= 'host;';// x-amz-content-sha256;x-amz-date is appended by default.
 	VCL_STRING _canonical_headers,    //= 'host:s3-ap-northeast-1.amazonaws.com\n'
 	VCL_BOOL feature                  //= reserved param(for varnish4)
 ){
-
-	
 	////////////////
 	//get data
 	const char *method;
@@ -165,16 +164,29 @@ void vmod_v4_generic(VRT_CTX,
 	
 	////////////////
 	//create signed headers
+	size_t tokenlen = 0;
+	if(token != NULL) tokenlen = strlen(token);
+
 	size_t len = strlen(_signed_headers) + 32;
+	if(tokenlen > 0) len += 21; // ;x-amz-security-token
 	char *psigned_headers = WS_Alloc(ctx->ws,len);
-	sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
-	
+	if(tokenlen > 0) {
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",_signed_headers);
+	} else {
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
+	}
 	
 	////////////////
 	//create canonical headers
 	len = strlen(_canonical_headers) + 115;
+	// Account for addition of "x-amz-security-token:[token]\n"
+	if(tokenlen > 0) len += 22 + tokenlen;
 	char *pcanonical_headers = WS_Alloc(ctx->ws,len);
-	sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
+	if(tokenlen > 0) {
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",_canonical_headers,payload_hash,amzdate,token);
+	} else {
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
+	}
 	
 	////////////////
 	//create credential scope
@@ -241,6 +253,10 @@ void vmod_v4_generic(VRT_CTX,
 	VRT_SetHdr(ctx, &gs , payload_hash , vrt_magic_string_end);
 	gs.what = "\013x-amz-date:";
 	VRT_SetHdr(ctx, &gs           , amzdate , vrt_magic_string_end);
+	if(tokenlen > 0){
+	  gs.what="\025x-amz-security-token:";
+	  VRT_SetHdr(ctx, &gs, token, vrt_magic_string_end);
+	}
 }
 
 VCL_STRING
