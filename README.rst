@@ -247,7 +247,7 @@ COMMON PROBLEMS
 HISTORY
 ===========
 
-Version 51.6: Support session token. IMPORTANT: Added token parameter at v4_generic. [Thanks pullreq #20 dgoodlad]
+Version 50.6: Support session token. IMPORTANT: Added token parameter at v4_generic. [Thanks pullreq #20 dgoodlad]
 
 Version 50.5: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
 
