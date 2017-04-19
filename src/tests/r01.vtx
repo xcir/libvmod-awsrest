@@ -1,6 +1,10 @@
 varnishtest "awsrest"
 #
-# varnishtest -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken=[Your Sesstion Token] -Durl=[URL] *.vtx
+# varnishtest -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] *.vtx
+#
+# token is very long.(over 256 byte)
+# But vtc macro's buffer is 256 byte.
+# Therefore, token was split.
 #
 
 varnish v1 -vcl+backend {
