@@ -1,7 +1,9 @@
 <?php
 //base http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
 //AWS署名v4テスト用
-
+//
+//  php aws_sigv4.php [access_key] [secret_key] [url] [session_token(option)]
+//
 function hash_sha256_raw($msg, $key)
 {
     return hash_hmac("sha256", $msg, $key, true);
@@ -15,19 +17,20 @@ function getSignature($key, $dateStamp, $regionName, $serviceName)
     $kSigning = hash_sha256_raw("aws4_request", $kService);
     return $kSigning;
 }
-function main($access_key,$secret_key,$canonical_uri){
+function main($access_key,$secret_key,$canonical_uri,$session_token=""){
 	//パラメータ
 	$service               = 's3';
 	$region                = 'ap-northeast-1';
 //	$canonical_uri         = 'URL指定' ;
 //	$access_key            = 'アクセスキー';
 //	$secret_key            = '秘密鍵';
-
+//	$session_token         = 'セッショントークン';
 	$method                = 'GET';
 	$host                  = "${service}-${region}.amazonaws.com";
 	 
 	$canonical_querystring = '';
 	$signed_headers        = 'host;x-amz-content-sha256;x-amz-date';
+	if($session_token) $signed_headers .= ";x-amz-security-token";
 	 
 	$endpoint              = "http://${host}${canonical_uri}";
 	$payload               = '';
@@ -50,6 +53,7 @@ function main($access_key,$secret_key,$canonical_uri){
 	$canonical_headers  = "host:$host\n";
 	$canonical_headers .= "x-amz-content-sha256:$payload_hash\n";
 	$canonical_headers .= "x-amz-date:$amzdate\n";
+	if($session_token) $canonical_headers .= "x-amz-security-token:$session_token\n";
 	 
 	//リクエスト生成
 	$canonical_request  = "$method\n";
@@ -76,6 +80,7 @@ function main($access_key,$secret_key,$canonical_uri){
 		"Authorization: $authorization_header",
 		"x-amz-date: $amzdate",
 		);
+	if($session_token) $headers[] = "x-amz-security-token: $session_token";
 	$request_url = rtrim("$endpoint?$canonical_querystring","?");
 	 
 	$context = array(
@@ -102,4 +107,6 @@ function prn($k,$v){
 	echo "\n";
 	echo str_repeat("<",40)."\n";
 }
-main($argv[1],$argv[2],$argv[3]);
+$token = '';
+if(isset($argv[4]))$token = $argv[4];
+main($argv[1],$argv[2],$argv[3],$token);

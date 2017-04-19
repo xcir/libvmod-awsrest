@@ -1,0 +1,59 @@
+varnishtest "awsrest"
+#
+# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] *.vtx
+#
+# token is very long.(over 256 byte)
+# But vtc macro's buffer is 256 byte.
+# Therefore, token was split.
+#
+
+
+varnish v1 -vcl+backend {
+	import awsrest;
+	backend default {.host = "s3-${region}.amazonaws.com";}
+	sub vcl_recv {
+		set req.http.x-orgurl = req.url;
+		set req.url           = "${url}";
+		set req.http.host     = "s3-${region}.amazonaws.com";
+		
+		if(req.http.x-orgurl == "/1"){
+			awsrest.v4_generic(
+				"s3",
+				"${region}",
+				"${accesskey}",
+				"${secretkey}",
+				"${token1}${token2}",
+				"host;",
+				"host:" + req.http.host + awsrest.lf(),
+				false
+			);
+		}
+		return(pass);
+	}
+	sub vcl_backend_fetch{
+		if(bereq.http.x-orgurl == "/2"){
+			unset bereq.http.Authorization;
+			awsrest.v4_generic(
+				"s3",
+				"${region}",
+				"${accesskey}",
+				"${secretkey}",
+				"${token1}${token2}",
+				"host;",
+				"host:" + bereq.http.host + awsrest.lf(),
+				false
+			);
+		}
+	}
+} -start
+
+client c1 {
+	txreq -url "/1"
+	rxresp
+	expect resp.status        == "200"
+	txreq -url "/2"
+	rxresp
+	expect resp.status        == "200"
+}
+
+client c1 -run
