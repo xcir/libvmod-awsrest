@@ -7,9 +7,9 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2017-04-19
-:Version: 50.6
-:Support Varnish Version: 4.1.x, 5.0.x, 5.1.x
+:Date: --
+:Version: trunk
+:Support Varnish Version: 5.0.x, 5.1.x
 :Manual section: 3
 
 SYNOPSIS
@@ -49,7 +49,7 @@ Prototype
                     STRING session_token,         // [your session token (optional)]
                     STRING signed_headers,        // [host;]                                   x-amz-content-sha256;x-amz-date is appended by default.
                     STRING canonical_headers,     // [host:s3-ap-northeast-1.amazonaws.com\n]
-                    BOOL   feature                // [false]                                   reserved param(for varnish4)
+                    BOOL   feature                // [false]                                   reserved param
                     )
 Return value
 	VOID
@@ -67,14 +67,12 @@ Example(set to req.*)
                 sub vcl_recv{
                   set req.http.host = "s3-ap-northeast-1.amazonaws.com";
                   awsrest.v4_generic(
-                      "s3",
-                      "ap-northeast-1",
-                      "[Your Access Key]",
-                      "[Your Secret Key]",
-                      "",
-                      "host;",
-                      "host:" + req.http.host + awsrest.lf(),
-                      false
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + req.http.host + awsrest.lf()
                   );
                 }
                 
@@ -96,14 +94,12 @@ Example(set to bereq.*)
                 sub vcl_backend_fetch{
                   set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
                   awsrest.v4_generic(
-                      "s3",
-                      "ap-northeast-1",
-                      "[Your Access Key]",
-                      "[Your Secret Key]",
-                      "",
-                      "host;",
-                      "host:" + bereq.http.host + awsrest.lf(),
-                      false
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + bereq.http.host + awsrest.lf()
                   );
                 }
                 //data
@@ -123,14 +119,13 @@ Example(using session token)
                 sub vcl_backend_fetch{
                   set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
                   awsrest.v4_generic(
-                      "s3",
-                      "ap-northeast-1",
-                      "[Your Access Key]",
-                      "[Your Secret Key]",
-                      "[Your Session Token]",
-                      "host;",
-                      "host:" + bereq.http.host + awsrest.lf(),
-                      false
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    token             = "[Your Session token]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + bereq.http.host + awsrest.lf()
                   );
                 }
                 //data
@@ -178,18 +173,37 @@ Usage::
 
 If you have installed Varnish to a non-standard directory, call
 ``autogen.sh`` and ``configure`` with ``PKG_CONFIG_PATH`` pointing to
-the appropriate path. For awsrest, when varnishd configure was called
+the appropriate path. For instance, when varnishd configure was called
 with ``--prefix=$PREFIX``, use
 
- PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
- export PKG_CONFIG_PATH
+::
+
+ export PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
+ export ACLOCAL_PATH=${PREFIX}/share/aclocal
+
+The module will inherit its prefix from Varnish, unless you specify a
+different ``--prefix`` when running the ``configure`` script for this
+module.
 
 Make targets:
 
 * make - builds the vmod.
 * make install - installs your vmod.
-* make check - runs the unit tests in ``src/tests/*.vtc``
+* make check - runs the unit tests in ``src/tests/*.vtc``.
 * make distcheck - run check and prepare a tarball of the vmod.
+
+If you build a dist tarball, you don't need any of the autotools or
+pkg-config. You can build the module simply by running::
+
+ ./configure
+ make
+
+Installation directories
+------------------------
+
+By default, the vmod ``configure`` script installs the built vmod in the
+directory relevant to the prefix. The vmod installation directory can be
+overridden by passing the ``vmoddir`` variable to ``make install``.
 
 
 COMMON PROBLEMS
@@ -244,28 +258,13 @@ COMMON PROBLEMS
 
 
 
-HISTORY
-===========
-
-Version 50.6: Support session token. IMPORTANT: Added token parameter at v4_generic. [Thanks pullreq #20 dgoodlad]
-
-Version 50.5: Support Varnish4.1.x / Varnish5.0.x [Thanks pullreq #12 poblahblahblah, issue #11 huayra]
-
-Version 0.4-varnish40: Support Varnish4.0.x
-
-Version 0.3-varnish30: Support V4 Signature. Delete method for v1 signature.
-
-Version 0.2-varnish30: add s3_generic_iam() [pullreq #1 Thanks RevaxZnarf]
-
-Version 0.1-varnish30: add s3_generic() , lf() method
-
 COPYRIGHT
 =============
 
 This document is licensed under the same license as the
 libvmod-awsrest project. See LICENSE for details.
 
-* Copyright (c) 2016 Shohei Tanaka(@xcir)
+* Copyright (c) 2012-2017 Shohei Tanaka(@xcir)
 
 File layout and configuration based on libvmod-example
 

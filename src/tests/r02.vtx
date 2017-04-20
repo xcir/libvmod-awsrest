@@ -18,14 +18,13 @@ varnish v1 -vcl+backend {
 		
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
-				"s3",
-				"${region}",
-				"${accesskey}",
-				"${secretkey}",
-				"${token1}${token2}",
-				"host;",
-				"host:" + req.http.host + awsrest.lf(),
-				false
+				service           = "s3",
+				region            = "${region}",
+				access_key        = "${accesskey}",
+				secret_key        = "${secretkey}",
+				token             = "${token1}${token2}",
+				signed_headers    = "host;",
+				canonical_headers = "host:" + req.http.host + awsrest.lf()
 			);
 		}
 		return(pass);
@@ -34,14 +33,13 @@ varnish v1 -vcl+backend {
 		if(bereq.http.x-orgurl == "/2"){
 			unset bereq.http.Authorization;
 			awsrest.v4_generic(
-				"s3",
-				"${region}",
-				"${accesskey}",
-				"${secretkey}",
-				"${token1}${token2}",
-				"host;",
-				"host:" + bereq.http.host + awsrest.lf(),
-				false
+				service           = "s3",
+				region            = "${region}",
+				access_key        = "${accesskey}",
+				secret_key        = "${secretkey}",
+				token             = "${token1}${token2}",
+				signed_headers    = "host;",
+				canonical_headers = "host:" + bereq.http.host + awsrest.lf()
 			);
 		}
 	}

@@ -1,0 +1,44 @@
+This is a running log of changes to libvmod-awsrest.
+
+libvmod-awsrest 51.7 (unreleased)
+--------------------------------
+
+* Drop support Varnish 4.1.x
+  Change layout.
+
+libvmod-awsrest 50.6 (2017-04-19)
+--------------------------------
+
+* Support session token.
+  IMPORTANT: Added token parameter at v4_generic.
+  (Thanks p-r #20 dgoodlad)
+
+libvmod-awsrest 50.5 (2016-11-19)
+--------------------------------
+
+* Support Varnish 4.1.x / 5.0.x
+  (Thanks p-r #12 poblahblahblah, issue #11 huayra)
+
+libvmod-awsrest 0.4 (2015-07-04)
+--------------------------------
+
+* Support Varnish 4.0.x
+
+libvmod-awsrest 0.3 (2015-05-06)
+--------------------------------
+
+* Support AWS V4 Signature
+* Delete method for v1 signature.
+
+libvmod-awsrest 0.2 (2013-01-14)
+--------------------------------
+
+* Added s3_generic_iam
+  (Thanks p-r #1 RevaxZnarf)
+
+libvmod-awsrest 0.1 (2012-07-04)
+--------------------------------
+
+First release
+
+
