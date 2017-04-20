@@ -29,6 +29,12 @@ For Varnish4.0.x
 See this link.
 https://github.com/xcir/libvmod-awsrest/tree/varnish40
 
+For Varnish4.1.x
+=================
+
+See this link.
+https://github.com/xcir/libvmod-awsrest/tree/varnish41
+
 DESCRIPTION
 ===========
 
