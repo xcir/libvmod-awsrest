@@ -1,24 +1,25 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
+/* need vcl.h before vrt.h for vmod_evet_f typedef */
 #include "vcl.h"
 #include "vrt.h"
 #include "cache/cache.h"
 
-#include "vcc_if.h"
-
+#include "vtim.h"
+#include "vcc_awsrest_if.h"
 
 #include <time.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <mhash.h>
 
 
-int
-init_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
+int __match_proto__(vmod_event_f)
+event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
-
 	return (0);
 }
 
@@ -111,8 +112,8 @@ void vmod_v4_generic(VRT_CTX,
 	VCL_STRING access_key,            //= 'your access key';
 	VCL_STRING secret_key,            //= 'your secret key';
 	VCL_STRING token,                 //= 'optional session token';
-	VCL_STRING _signed_headers,       //= 'host;';// x-amz-content-sha256;x-amz-date is appended by default.
-	VCL_STRING _canonical_headers,    //= 'host:s3-ap-northeast-1.amazonaws.com\n'
+	VCL_STRING signed_headers,       //= 'host;';// x-amz-content-sha256;x-amz-date is appended by default.
+	VCL_STRING canonical_headers,    //= 'host:s3-ap-northeast-1.amazonaws.com\n'
 	VCL_BOOL feature                  //= reserved param(for varnish4)
 ){
 	////////////////
@@ -167,25 +168,25 @@ void vmod_v4_generic(VRT_CTX,
 	size_t tokenlen = 0;
 	if(token != NULL) tokenlen = strlen(token);
 
-	size_t len = strlen(_signed_headers) + 32;
+	size_t len = strlen(signed_headers) + 32;
 	if(tokenlen > 0) len += 21; // ;x-amz-security-token
 	char *psigned_headers = WS_Alloc(ctx->ws,len);
 	if(tokenlen > 0) {
-		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",_signed_headers);
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",signed_headers);
 	} else {
-		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",_signed_headers);
+		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",signed_headers);
 	}
 	
 	////////////////
 	//create canonical headers
-	len = strlen(_canonical_headers) + 115;
+	len = strlen(canonical_headers) + 115;
 	// Account for addition of "x-amz-security-token:[token]\n"
 	if(tokenlen > 0) len += 22 + tokenlen;
 	char *pcanonical_headers = WS_Alloc(ctx->ws,len);
 	if(tokenlen > 0) {
-		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",_canonical_headers,payload_hash,amzdate,token);
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",canonical_headers,payload_hash,amzdate,token);
 	} else {
-		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",_canonical_headers,payload_hash,amzdate);
+		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",canonical_headers,payload_hash,amzdate);
 	}
 	
 	////////////////

@@ -10,18 +10,17 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import awsrest from "${vmod_topbuild}/src/.libs/libvmod_awsrest.so";
+	import ${vmod_awsrest};
 
 	sub vcl_recv {
 		awsrest.v4_generic(
-			"s3",
-			"ap-northeast-1",
-			"[Your Access Key]",
-			"[Your Secret Key]",
-			"req-token",
-			"host;",
-			"host:" + req.http.host + awsrest.lf(),
-			false
+			service           = "s3",
+			region            = "ap-northeast-1",
+			access_key        = "[Your Access Key]",
+			secret_key        = "[Your Secret Key]",
+			token             = "req-token",
+			signed_headers    = "host;",
+			canonical_headers = "host:" + req.http.host + awsrest.lf()
 		);
 		if(req.http.Authorization){
 			set req.http.x-req = "1";
@@ -33,14 +32,13 @@ varnish v1 -vcl+backend {
 	sub vcl_backend_fetch{
 		unset bereq.http.Authorization;
 		awsrest.v4_generic(
-			"s3",
-			"ap-northeast-1",
-			"[Your Access Key]",
-			"[Your Secret Key]",
-			"bereq-token",
-			"host;",
-			"host:" + bereq.http.host + awsrest.lf(),
-			false
+			service           = "s3",
+			region            = "ap-northeast-1",
+			access_key        = "[Your Access Key]",
+			secret_key        = "[Your Secret Key]",
+			token             = "bereq-token",
+			signed_headers    = "host;",
+			canonical_headers = "host:" + bereq.http.host + awsrest.lf()
 		);
 		if(bereq.http.Authorization){
 			set bereq.http.x-bereq = "1";

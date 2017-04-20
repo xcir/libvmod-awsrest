@@ -1,17 +1,16 @@
 Summary: Varnish AWS REST API module
 Name: vmod-awsrest
-Version: 50.5
+Version: 51.7
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-awsrest.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish >= @VARNISH_VERSION@
+Requires: varnish >= 5.0.0
 Requires: mhash
 BuildRequires: make
 BuildRequires: python-docutils
-BuildRequires: varnish >= 4.1.3
-BuildRequires: pkgconfig(varnishapi) >= 4.1.3
+BuildRequires: varnish >= 5.0.0
 BuildRequires: mhash-devel
 
 %description
@@ -40,6 +39,10 @@ Example VMOD
 %{_mandir}/man?/*
 
 %changelog
+* Thu Apr 20 2017 Shohei Tanaka <kokoniimasu@gmail.com> - 51.7
+- Drop support Varnish 4.1.x
+- Sync newst vmod_example
+
 * Sun Nov 20 2016 Shohei Tanaka <kokoniimasu@gmail.com> - 50.5
 - Support Varnish4.1.x, 5.0.x
 

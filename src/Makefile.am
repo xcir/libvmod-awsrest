@@ -1,38 +1,28 @@
-AM_CPPFLAGS = @VMOD_INCLUDES@ -Wall -Werror
+AM_CFLAGS = $(VARNISHAPI_CFLAGS) -Wall -Werror
+AM_LDFLAGS = $(VARNISHAPI_LIBS) $(VMOD_LDFLAGS) -lmhash
 
-vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_awsrest.la
-
-libvmod_awsrest_la_LDFLAGS = -module -export-dynamic -avoid-version -shared  -lmhash
 
 libvmod_awsrest_la_SOURCES = \
 	vmod_awsrest.c
 
 nodist_libvmod_awsrest_la_SOURCES = \
-	vcc_if.c \
-	vcc_if.h
+	vcc_awsrest_if.c \
+	vcc_awsrest_if.h
 
-vmod_awsrest.lo: vcc_if.c vcc_if.h
+dist_man_MANS = vmod_awsrest.3
 
-vcc_if.c: vcc_if.h
+@BUILD_VMOD_AWSREST@
 
-vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_awsrest.vcc
-	@VMODTOOL@ $(top_srcdir)/src/vmod_awsrest.vcc
+AM_TESTS_ENVIRONMENT = \
+	PATH="$(VMOD_TEST_PATH)" \
+	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH)"
+TEST_EXTENSIONS = .vtc
+VTC_LOG_COMPILER = varnishtest -v
+AM_VTC_LOG_FLAGS = -Dvmod_awsrest="$(VMOD_AWSREST)"
 
-VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
-.PHONY: $(VMOD_TESTS)
-
-$(top_srcdir)/src/tests/*.vtc: libvmod_awsrest.la
-	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_topbuild=$(abs_top_builddir) $@
-
-check: $(VMOD_TESTS)
+TESTS = @VMOD_TESTS@
 
 EXTRA_DIST = \
 	vmod_awsrest.vcc \
 	$(VMOD_TESTS)
-
-CLEANFILES = \
-	$(builddir)/vcc_if.c \
-	$(builddir)/vcc_if.h \
-	$(builddir)/vmod_awsrest.rst \
-	$(builddir)/vmod_awsrest.man.rst

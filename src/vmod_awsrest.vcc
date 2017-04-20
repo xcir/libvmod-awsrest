@@ -1,4 +1,140 @@
-$Module awsrest 3 Varnish AWS RESP API module
-$Event init_function
-$Function VOID v4_generic(STRING,STRING,STRING,STRING,STRING,STRING,STRING,BOOL)
+#
+# This document is licensed under the same license as the libvmod-awsrest project. See LICENSE for details.
+# Copyright (c) 2012-2017 Shohei Tanaka(@xcir)
+#
+# File layout and configuration based on libvmod-example
+# Copyright (c) 2011 Varnish Software AS
+# hmac-sha1 and base64 based on libvmod-digest( https://github.com/varnish/libvmod-digest )
+#
+
+$Module awsrest 3 Awsrest VMOD
+
+DESCRIPTION
+===========
+
+Append aws signature v4 to req/bereq.
+
+* https://github.com/xcir/libvmod-awsrest
+* https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
+
+
+$Event event_function
+
+$Function VOID v4_generic(STRING service, STRING region, STRING access_key, STRING secret_key, STRING token = "", STRING signed_headers, STRING canonical_headers, BOOL feature = 0)
+
+Prototype
+        ::
+
+                v4_generic(
+                    STRING service,               // [s3]
+                    STRING region,                // [ap-northeast-1]
+                    STRING access_key,            // [your access key]
+                    STRING secret_key,            // [your secret key]
+                    STRING session_token,         // [your session token (optional)]
+                    STRING signed_headers,        // [host;]                                   x-amz-content-sha256;x-amz-date is appended by default.
+                    STRING canonical_headers,     // [host:s3-ap-northeast-1.amazonaws.com\n]
+                    BOOL   feature                // [false]                                   reserved param
+                    )
+Return value
+	VOID
+Description
+	generate Authorization/x-amz-date/x-amz-content-sha256 header for AWS REST API.
+Example(set to req.*)
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "s3-ap-northeast-1.amazonaws.com";
+                }
+                
+                sub vcl_recv{
+                  set req.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  awsrest.v4_generic(
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + req.http.host + awsrest.lf()
+                  );
+                }
+                
+                //data
+
+                //2 ReqHeader      c Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //2 ReqHeader      c x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //2 ReqHeader      c x-amz-date: 20150704T103402Z
+                
+Example(set to bereq.*)
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "s3-ap-northeast-1.amazonaws.com";
+                }
+                
+                sub vcl_backend_fetch{
+                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  awsrest.v4_generic(
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + bereq.http.host + awsrest.lf()
+                  );
+                }
+                //data
+                //25 BereqHeader    b Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //25 BereqHeader    b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //25 BereqHeader    b x-amz-date: 20150704T103159Z
+
+Example(using session token)
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "s3-ap-northeast-1.amazonaws.com";
+                }
+                
+                sub vcl_backend_fetch{
+                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  awsrest.v4_generic(
+                    service           = "s3",
+                    region            = "ap-northeast-1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    token             = "[Your Session token]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + bereq.http.host + awsrest.lf()
+                  );
+                }
+                //data
+                //25 BereqHeader    b Authorization: AWS4-HMAC-SHA256 Credential=****************/20150704/ap-northeast-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=****************
+                //25 BereqHeader    b x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                //25 BereqHeader    b x-amz-date: 20150704T103159Z
+                //25 BereqHeader    b x-amz-security-token: [Your Session Token]
+
+
 $Function STRING lf()
+
+Prototype
+        ::
+
+                lf()
+Return value
+	STRING
+Description
+	return LF
+Example
+        ::
+
+                "x-amz-hoge1:hoge" + awsrest.lf() + "x-amz-hoge2:hoge" + awsrest.lf()
+
+
+                //data
+                x-amz-hoge1:hoge
+                x-amz-hoge2:hoge
