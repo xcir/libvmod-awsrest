@@ -1,3 +1,9 @@
+libvmod-awsrest (50.6) unstable; urgency=low
+
+  * Support session token.
+
+ -- xcir <xcir@varnish41-1>  Wed, 19 Apr 2017 21:27:00 +0900
+
 libvmod-awsrest (50.5) unstable; urgency=low
 
   * Support Varnish4.1.x / Varnish5.0.x

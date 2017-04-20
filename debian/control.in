@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 7),
  build-essential,
  pkg-config,
  python-docutils,
- varnish (>= 4.1.3),
- libvarnishapi-dev (>= 4.1.3) | varnish-dev (>= 5.0.0),
+ varnish (>= 5.0.0),
+ varnish-dev (>= 5.0.0),
  libmhash-dev
 Standards-Version: 3.8.1
 Vcs-Git: git://github.com/xcir/libvmod-awsrest.git
