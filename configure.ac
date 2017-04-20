@@ -43,9 +43,7 @@ AC_SUBST([VARNISH_LIBRARY_PATH],
 	[$LIBVARNISHAPI_LIBDIR:$LIBVARNISHAPI_LIBDIR/varnish])
 
 AC_CONFIG_FILES([
-	debian/control
 	Makefile
 	src/Makefile
-	vmod-awsrest.spec
 ])
 AC_OUTPUT

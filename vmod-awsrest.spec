@@ -6,7 +6,7 @@ License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-awsrest.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish >= @VARNISH_VERSION@
+Requires: varnish >= 5.1.1
 Requires: mhash
 BuildRequires: make
 BuildRequires: python-docutils

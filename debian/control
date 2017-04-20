@@ -14,5 +14,5 @@ Vcs-Git: git://github.com/xcir/libvmod-awsrest.git
 
 Package: libvmod-awsrest
 Architecture: any
-Depends: varnish (>= @VARNISH_VERSION@), ${shlibs:Depends}, ${misc:Depends}, ${Varnish:ABI}, libmhash2
+Depends: varnish (>= 5.0.0), ${shlibs:Depends}, ${misc:Depends}, ${Varnish:ABI}, libmhash2
 Description: Varnish AWS REST API module
