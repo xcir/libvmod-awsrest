@@ -1,10 +1,10 @@
 This is a running log of changes to libvmod-awsrest.
 
-libvmod-awsrest 51.7 (unreleased)
+libvmod-awsrest 51.7 (2017-04-20)
 --------------------------------
 
 * Drop support Varnish 4.1.x
-  Change layout.
+  Sync newst vmod_example
 
 libvmod-awsrest 50.6 (2017-04-19)
 --------------------------------

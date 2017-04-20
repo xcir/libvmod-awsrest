@@ -10,8 +10,8 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: --
-:Version: trunk
+:Date: 2017/04/20
+:Version: 51.7
 :Support Varnish Version: 5.0.x, 5.1.x
 :Manual section: 3
 
@@ -238,14 +238,12 @@ COMMON PROBLEMS
    sub vcl_recv{
      set req.url = regsuball(req.url,"@","%40");
      awsrest.v4_generic(
-       "s3",
-       "ap-northeast-1",
-       "[Your Access Key]",
-       "[Your Secret Key]",
-       "",
-       "host;",
-       "host:" + req.http.host + awsrest.lf(),
-       false
+       service           = "s3",
+       region            = "ap-northeast-1",
+       access_key        = "[Your Access Key]",
+       secret_key        = "[Your Secret Key]",
+       signed_headers    = "host;",
+       canonical_headers = "host:" + req.http.host + awsrest.lf()
      );
    }
    //////////////////////////
@@ -254,14 +252,12 @@ COMMON PROBLEMS
    sub vcl_backend_fetch {
      set bereq.url = regsuball(bereq.url,"@","%40");
      awsrest.v4_generic(
-       "s3",
-       "ap-northeast-1",
-       "[Your Access Key]",
-       "[Your Secret Key]",
-       "",
-       "host;",
-       "host:" + bereq.http.host + awsrest.lf(),
-       false
+       service           = "s3",
+       region            = "ap-northeast-1",
+       access_key        = "[Your Access Key]",
+       secret_key        = "[Your Secret Key]",
+       signed_headers    = "host;",
+       canonical_headers = "host:" + bereq.http.host + awsrest.lf()
      );
    }
 
