@@ -22,7 +22,7 @@ addons:
     notification_email: kokoniimasu+xcir@gmail.com
     build_command_prepend: "./autogen.sh; ./configure --prefix=/usr; make clean"
     build_command:   "make -j 4"
-    branch_pattern: coverity_scan
+    branch_pattern: master
 
 before_install:
   - set -e
