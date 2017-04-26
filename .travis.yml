@@ -17,7 +17,6 @@ addons:
     - libmhash-dev
 
 before_install:
-  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - set -e
   - wget https://repo.varnish-cache.org/source/varnish-5.1.2.tar.gz
   - tar -zxf varnish-*.tar.gz
@@ -25,6 +24,7 @@ before_install:
   - ./configure --prefix=/usr
   - make -sj32
   - sudo make install
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - popd
 
 before_script:
