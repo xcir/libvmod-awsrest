@@ -15,6 +15,14 @@ addons:
     packages:
     - python-docutils
     - libmhash-dev
+  coverity_scan:
+    project:
+      name: "xcir/libvmod-awsrest"
+      description: "Build submitted via Travis CI"
+    notification_email: kokoniimasu+xcir@gmail.com
+    build_command_prepend: "./autogen.sh; ./configure --prefix=/usr; make clean"
+    build_command:   "make -j 4"
+    branch_pattern: coverity_scan
 
 before_install:
   - set -e
@@ -38,13 +46,3 @@ script:
 compiler:
   - clang
   - gcc
-
-addons:
-  coverity_scan:
-    project:
-      name: "xcir/libvmod-awsrest"
-      description: "Build submitted via Travis CI"
-    notification_email: kokoniimasu+xcir@gmail.com
-    build_command_prepend: "./autogen.sh; ./configure --prefix=/usr; make clean"
-    build_command:   "make -j 4"
-    branch_pattern: coverity_scan
