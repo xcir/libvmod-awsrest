@@ -1,5 +1,7 @@
 .. image:: https://travis-ci.org/xcir/libvmod-awsrest.svg?branch=master
     :target: https://travis-ci.org/xcir/libvmod-awsrest
+.. image:: https://scan.coverity.com/projects/12560/badge.svg
+    :target: https://scan.coverity.com/projects/xcir-libvmod-awsrest
 
 ===================
 vmod_awsrest
