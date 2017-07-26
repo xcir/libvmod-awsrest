@@ -167,6 +167,29 @@ Example
                 x-amz-hoge1:hoge
                 x-amz-hoge2:hoge
 
+$Function STRING form_url(STRING url)
+
+Prototype
+        ::
+
+                form_url(url)
+Return value
+	STRING
+Description
+	Add "=" if field is not have value and delimiter.
+Example
+        ::
+
+                import awsrest;
+                
+                sub vcl_recv{
+                  set req.url = awsrest.form_url(req.url);
+                }
+
+                //log
+                **** v1    0.5 vsl|       1001 ReqURL          c /?aa&bb&cc
+                **** v1    0.5 vsl|       1001 ReqURL          c /?aa=&bb=&cc=
+
 INSTALLATION
 ============
 
@@ -225,11 +248,11 @@ COMMON PROBLEMS
   Check if ``PKG_CONFIG_PATH`` has been set correctly before calling
   ``autogen.sh`` and ``configure``
 
-* If you catch signature error in several request
+* If you catch signature error in several request(URI-encoded)
 
   Please check that URI encoded.
   AWS signature v4 is require URI-encode. (ref: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html#d0e8062 )
-  This VMOD does not update be/req.url.
+  This VMOD does not automatically update update be/req.url.
   Because, can't detect URI-encoded or not.
   
   Sample(replace @ -> %40)::
@@ -263,7 +286,36 @@ COMMON PROBLEMS
      );
    }
 
+* If a signature error occurs when using a query-string
 
+  AWS signature v4's query-string require sorted field and field with delimiter.
+  
+  Failed url::
+  
+   /a?c=1&b=1
+   /a?b&c
+ 
+  Success url::
+
+    /a?b=1&c=1
+    /a?b=&c=
+  
+  Use std.querysort and awsrest.formurl to solve it.
+  
+  Sample::
+  
+   sub vcl_recv{
+     set req.url = awsrest.formurl(std.querysort(req.url));
+     awsrest.v4_generic(
+       service           = "s3",
+       region            = "ap-northeast-1",
+       access_key        = "[Your Access Key]",
+       secret_key        = "[Your Secret Key]",
+       signed_headers    = "host;",
+       canonical_headers = "host:" + req.http.host + awsrest.lf()
+     );
+   }
+ 
 
 COPYRIGHT
 =============

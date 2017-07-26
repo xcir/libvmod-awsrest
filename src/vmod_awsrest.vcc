@@ -139,4 +139,25 @@ Example
                 x-amz-hoge1:hoge
                 x-amz-hoge2:hoge
 
-$Function STRING form_url(STRING url)
+$Function STRING formurl(STRING url)
+
+Prototype
+        ::
+
+                formurl(url)
+Return value
+	STRING
+Description
+	Add "=" if field is not have value and delimiter.
+Example
+        ::
+
+                import awsrest;
+                
+                sub vcl_recv{
+                  set req.url = awsrest.formurl(req.url);
+                }
+
+                //log
+                **** v1    0.5 vsl|       1001 ReqURL          c /?aa&bb&cc
+                **** v1    0.5 vsl|       1001 ReqURL          c /?aa=&bb=&cc=

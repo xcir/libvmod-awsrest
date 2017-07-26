@@ -270,11 +270,12 @@ vmod_lf(VRT_CTX){
 
 
 VCL_STRING
-vmod_form_url(VRT_CTX, VCL_STRING url){
+vmod_formurl(VRT_CTX, VCL_STRING url){
 	char *adr, *ampadr, *eqadr;
-	char *pp,*p;
+	char *pp, *p;
 	unsigned u;
 	int len = 0;
+	int cnt = 0;
 
 	adr = strchr(url, (int)'?');
 	
@@ -283,9 +284,9 @@ vmod_form_url(VRT_CTX, VCL_STRING url){
 	}
 
 	u = WS_Reserve(ctx->ws, 0);
-	pp= p= ctx->ws->f;
+	pp = p = ctx->ws->f;
 	
-	len =adr - url;
+	len = adr - url;
 	if(len > u){
 		WS_Release(ctx->ws, 0);
 		WS_MarkOverflow(ctx->ws);
@@ -294,7 +295,6 @@ vmod_form_url(VRT_CTX, VCL_STRING url){
 	memcpy(p, url, len);
 	p+=len;
 
-	int cnt = 0;
 	while(1){
 		ampadr = strchr(adr +1, (int)'&');
 		if(ampadr == NULL){
@@ -306,7 +306,7 @@ vmod_form_url(VRT_CTX, VCL_STRING url){
 			}
 			memcpy(p, adr, len);
 			p+=len;
-			eqadr  = strchr(adr +1, (int)'=');
+			eqadr = strchr(adr +1, (int)'=');
 			if(eqadr == NULL){
 				cnt++;
 				*p = '=';
@@ -314,7 +314,7 @@ vmod_form_url(VRT_CTX, VCL_STRING url){
 			}
 			break;
 		}else{
-			eqadr  = memchr(adr +1, (int)'=', ampadr - adr);
+			eqadr = memchr(adr +1, (int)'=', ampadr - adr);
 			len = ampadr - adr;
 			if(p - pp + len + 2 > u){
 				WS_Release(ctx->ws, 0);
@@ -339,7 +339,6 @@ vmod_form_url(VRT_CTX, VCL_STRING url){
 
 	*p = 0;
 	p++;
-	
 	WS_Release(ctx->ws, p - pp);
 	
 	return(pp);

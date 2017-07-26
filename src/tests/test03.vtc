@@ -3,10 +3,15 @@ varnishtest "awsrest"
 server s1 {
 	rxreq
 	expect req.http.e1 == "/?a=b=c"
+	expect req.http.e2 == "/&a"
 	expect req.http.x1 == "/?a="
 	expect req.http.x2 == "/?a=&b="
 	expect req.http.x3 == "/?a="
-	expect req.http.x4 == "/?a=&b="
+	expect req.http.x4 == "/?a=123"
+	expect req.http.x5 == "/?a==123"
+	expect req.http.x6 == "/?a=&b="
+	expect req.http.x7 == "/?a=foo&b=bar&c=&d=&e=&e=mage"
+	expect req.url     == "/?aa=&bb=&cc="
 	txresp
 } -start
 
@@ -14,16 +19,21 @@ varnish v1 -vcl+backend {
 	import ${vmod_awsrest};
 
 	sub vcl_recv {
-		set req.http.e1 = awsrest.form_url("/?a=b=c");
-		set req.http.x1 = awsrest.form_url("/?a");
-		set req.http.x2 = awsrest.form_url("/?a&b");
-		set req.http.x3 = awsrest.form_url("/?a=");
-		set req.http.x4 = awsrest.form_url("/?a=&b=");
+		set req.http.e1 = awsrest.formurl("/?a=b=c");
+		set req.http.e2 = awsrest.formurl("/&a");
+		set req.http.x1 = awsrest.formurl("/?a");
+		set req.http.x2 = awsrest.formurl("/?a&b");
+		set req.http.x3 = awsrest.formurl("/?a=");
+		set req.http.x4 = awsrest.formurl("/?a=123");
+		set req.http.x5 = awsrest.formurl("/?a==123");
+		set req.http.x6 = awsrest.formurl("/?a=&b=");
+		set req.http.x7 = awsrest.formurl("/?a=foo&b=bar&c&d=&e&e=mage");
+		set req.url = awsrest.formurl(req.url);
 	}
 } -start
 
 client c1 {
-	txreq -url "/"
+	txreq -url "/?aa&bb&cc"
 	rxresp
 }
 

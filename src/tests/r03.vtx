@@ -1,6 +1,6 @@
 varnishtest "awsrest"
 #
-# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Durl=[URL] r01.vtx
+# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Durl=[URL] r03.vtx
 #
 # token is very long.(over 256 byte)
 # But vtc macro's buffer is 256 byte.
@@ -9,10 +9,12 @@ varnishtest "awsrest"
 
 varnish v1 -vcl+backend {
 	import awsrest;
+	import std;
 	backend default {.host = "s3-${region}.amazonaws.com";}
 	sub vcl_recv {
 		set req.http.x-orgurl = req.url;
-		set req.url           = "${url}";
+		set req.url           = "${url}?b&a";
+		set req.url           = awsrest.formurl(std.querysort(req.url));
 		set req.http.host     = "s3-${region}.amazonaws.com";
 		
 		if(req.http.x-orgurl == "/1"){
