@@ -138,3 +138,5 @@ Example
                 //data
                 x-amz-hoge1:hoge
                 x-amz-hoge2:hoge
+
+$Function STRING form_url(STRING url)
