@@ -167,12 +167,12 @@ Example
                 x-amz-hoge1:hoge
                 x-amz-hoge2:hoge
 
-$Function STRING form_url(STRING url)
+$Function STRING formurl(STRING url)
 
 Prototype
         ::
 
-                form_url(url)
+                formurl(url)
 Return value
 	STRING
 Description
@@ -183,7 +183,7 @@ Example
                 import awsrest;
                 
                 sub vcl_recv{
-                  set req.url = awsrest.form_url(req.url);
+                  set req.url = awsrest.formurl(req.url);
                 }
 
                 //log
