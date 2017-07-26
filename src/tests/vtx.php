@@ -17,12 +17,13 @@ echo shell_exec($cmd);
 
 //sts
 $r   = json_decode(shell_exec('aws sts get-session-token'), 1);
+$i=ceil(strlen($r['Credentials']['SessionToken'])/2);
 $cmd = sprintf('varnishtest -Dregion=%s -Daccesskey="%s" -Dsecretkey="%s" -Dtoken1="%s" -Dtoken2="%s" -Durl="%s" t*.vtx',
          $argv[2],
          $r['Credentials']['AccessKeyId'],
          $r['Credentials']['SecretAccessKey'],
-         substr($r['Credentials']['SessionToken'],0,100),
-         substr($r['Credentials']['SessionToken'],100),
+         substr($r['Credentials']['SessionToken'],0,$i),
+         substr($r['Credentials']['SessionToken'],$i),
          $argv[3]
   );
 echo shell_exec($cmd);
