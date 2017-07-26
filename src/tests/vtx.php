@@ -17,7 +17,7 @@ echo shell_exec($cmd);
 
 //sts
 $r   = json_decode(shell_exec('aws sts get-session-token'), 1);
-$i=ceil(strlen($r['Credentials']['SessionToken'])/2);
+$i   = ceil(strlen($r['Credentials']['SessionToken'])/2);
 $cmd = sprintf('varnishtest -Dregion=%s -Daccesskey="%s" -Dsecretkey="%s" -Dtoken1="%s" -Dtoken2="%s" -Durl="%s" t*.vtx',
          $argv[2],
          $r['Credentials']['AccessKeyId'],
