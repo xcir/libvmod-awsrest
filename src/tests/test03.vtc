@@ -4,6 +4,7 @@ server s1 {
 	rxreq
 	expect req.http.e1 == "/?a=b=c"
 	expect req.http.e2 == "/&a"
+	expect req.http.e3 == "/?a=&=&=&="
 	expect req.http.x1 == "/?a="
 	expect req.http.x2 == "/?a=&b="
 	expect req.http.x3 == "/?a="
@@ -21,6 +22,7 @@ varnish v1 -vcl+backend {
 	sub vcl_recv {
 		set req.http.e1 = awsrest.formurl("/?a=b=c");
 		set req.http.e2 = awsrest.formurl("/&a");
+		set req.http.e3 = awsrest.formurl("/?a&&&");
 		set req.http.x1 = awsrest.formurl("/?a");
 		set req.http.x2 = awsrest.formurl("/?a&b");
 		set req.http.x3 = awsrest.formurl("/?a=");
