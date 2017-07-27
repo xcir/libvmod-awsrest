@@ -1,19 +1,20 @@
 varnishtest "awsrest"
 #
-# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] *.vtx
+# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Durl=[URL] r02.vtx
 #
 # token is very long.(over 256 byte)
 # But vtc macro's buffer is 256 byte.
 # Therefore, token was split.
 #
 
-
 varnish v1 -vcl+backend {
 	import awsrest;
+	import std;
 	backend default {.host = "s3-${region}.amazonaws.com";}
 	sub vcl_recv {
 		set req.http.x-orgurl = req.url;
-		set req.url           = "${url}";
+		set req.url           = "${url}?b&a";
+		set req.url           = awsrest.formurl(std.querysort(req.url));
 		set req.http.host     = "s3-${region}.amazonaws.com";
 		
 		if(req.http.x-orgurl == "/1"){
@@ -22,7 +23,6 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				token             = "${token1}${token2}",
 				signed_headers    = "host;",
 				canonical_headers = "host:" + req.http.host + awsrest.lf()
 			);
@@ -37,7 +37,6 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				token             = "${token1}${token2}",
 				signed_headers    = "host;",
 				canonical_headers = "host:" + bereq.http.host + awsrest.lf()
 			);
