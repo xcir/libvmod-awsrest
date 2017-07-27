@@ -1,11 +1,12 @@
 varnishtest "awsrest"
 #
-# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Durl=[URL] r01.vtx
+# varnishtest -Dregion=[Your Region] -Daccesskey=[Your Access Key] -Dsecretkey=[Your Secret Key] -Dtoken1=[Your Sesstion Token(head)] -Dtoken2=[Your Sesstion Token(last)] -Durl=[URL] t01.vtx
 #
 # token is very long.(over 256 byte)
 # But vtc macro's buffer is 256 byte.
 # Therefore, token was split.
 #
+
 
 varnish v1 -vcl+backend {
 	import awsrest;
@@ -21,6 +22,7 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
+				token             = "${token1}${token2}",
 				signed_headers    = "host;",
 				canonical_headers = "host:" + req.http.host + awsrest.lf()
 			);
@@ -35,6 +37,7 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
+				token             = "${token1}${token2}",
 				signed_headers    = "host;",
 				canonical_headers = "host:" + bereq.http.host + awsrest.lf()
 			);

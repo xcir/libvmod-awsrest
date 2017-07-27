@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <mhash.h>
 
-
 int __match_proto__(vmod_event_f)
 event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
@@ -266,4 +265,90 @@ vmod_lf(VRT_CTX){
 	p = WS_Alloc(ctx->ws,2);
 	strcpy(p,"\n");
 	return p;
+}
+
+
+VCL_STRING
+vmod_formurl(VRT_CTX, VCL_STRING url){
+	char *adr, *ampadr, *eqadr;
+	char *pp, *p;
+	unsigned u;
+	int len = 0;
+	int cnt = 0;
+	const char *lst= url + strlen(url) -1;
+
+	adr = strchr(url, (int)'?');
+	
+	if(adr == NULL){
+		return url;
+	}
+
+	u = WS_Reserve(ctx->ws, 0);
+	pp = p = ctx->ws->f;
+
+	len = adr - url;
+	if(len + 1 > u){ // 1=(null)
+		WS_Release(ctx->ws, 0);
+		WS_MarkOverflow(ctx->ws);
+		return url;
+	}
+	memcpy(p, url, len);
+	p+=len;
+	for(;lst >url;lst--){
+		if(*lst != '?' && *lst != '&'){
+			lst++;
+			break;
+		}
+	}
+	if(lst <= adr){
+		// url: /xxxx? /?
+		*p = 0;
+		p++;
+		WS_Release(ctx->ws, p - pp);
+		return(pp);
+	}
+	
+	while(1){
+		ampadr = memchr(adr +1, (int)'&', lst - adr -1);
+		if(ampadr == NULL){
+			len = lst - adr;
+			if(p - pp + len + 2 > u){ // 2= strlen("=")+1(null)
+				WS_Release(ctx->ws, 0);
+				WS_MarkOverflow(ctx->ws);
+				return url;
+			}
+			memcpy(p, adr, len);
+			p+=len;
+			
+			eqadr = memchr(adr +1, (int)'=', lst - adr -1);
+			if(eqadr == NULL){
+				cnt++;
+				*p = '=';
+				p++;
+			}
+			break;
+		}else{
+			eqadr = memchr(adr +1, (int)'=', ampadr - adr -1);
+			len = ampadr - adr;
+			if(p - pp + len + 2 > u){
+				WS_Release(ctx->ws, 0);
+				WS_MarkOverflow(ctx->ws);
+				return url;
+			}
+			memcpy(p, adr, len);
+			p+=len;
+			if(eqadr == NULL){
+				cnt++;
+				*p = '=';
+				p++;
+			}
+			adr = ampadr;
+		}
+	}
+	*p = 0;
+	p++;
+	WS_Release(ctx->ws, p - pp);
+	
+	return(pp);
+	
 }
