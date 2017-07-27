@@ -177,17 +177,20 @@ Return value
 	STRING
 Description
 	Add "=" if field is not have value and delimiter.
+	Strip "?","&" from the end of a string.
+	AWS signature v4's query-string require sorted field(std.querysort) and field with delimiter(this function)
 Example
         ::
 
                 import awsrest;
+                import std;
                 
                 sub vcl_recv{
-                  set req.url = awsrest.formurl(req.url);
+                  set req.url = awsrest.formurl(std.querysort(req.url));
                 }
 
                 //log
-                **** v1    0.5 vsl|       1001 ReqURL          c /?aa&bb&cc
+                **** v1    0.5 vsl|       1001 ReqURL          c /?aa&cc&bb
                 **** v1    0.5 vsl|       1001 ReqURL          c /?aa=&bb=&cc=
 
 INSTALLATION

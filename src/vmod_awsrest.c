@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <mhash.h>
 
-
 int __match_proto__(vmod_event_f)
 event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
@@ -276,6 +275,7 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 	unsigned u;
 	int len = 0;
 	int cnt = 0;
+	const char *lst= url + strlen(url) -1;
 
 	adr = strchr(url, (int)'?');
 	
@@ -285,20 +285,33 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 
 	u = WS_Reserve(ctx->ws, 0);
 	pp = p = ctx->ws->f;
-	
+
 	len = adr - url;
-	if(len > u){
+	if(len + 1 > u){ // 1=(null)
 		WS_Release(ctx->ws, 0);
 		WS_MarkOverflow(ctx->ws);
 		return url;
 	}
 	memcpy(p, url, len);
 	p+=len;
-
+	for(;lst >url;lst--){
+		if(*lst != '?' && *lst != '&'){
+			lst++;
+			break;
+		}
+	}
+	if(lst <= adr){
+		// url: /xxxx? /?
+		*p = 0;
+		p++;
+		WS_Release(ctx->ws, p - pp);
+		return(pp);
+	}
+	
 	while(1){
-		ampadr = strchr(adr +1, (int)'&');
+		ampadr = memchr(adr +1, (int)'&', lst - adr -1);
 		if(ampadr == NULL){
-			len = strlen(adr);
+			len = lst - adr;
 			if(p - pp + len + 2 > u){ // 2= strlen("=")+1(null)
 				WS_Release(ctx->ws, 0);
 				WS_MarkOverflow(ctx->ws);
@@ -306,7 +319,8 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 			}
 			memcpy(p, adr, len);
 			p+=len;
-			eqadr = strchr(adr +1, (int)'=');
+			
+			eqadr = memchr(adr +1, (int)'=', lst - adr -1);
 			if(eqadr == NULL){
 				cnt++;
 				*p = '=';
@@ -314,7 +328,7 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 			}
 			break;
 		}else{
-			eqadr = memchr(adr +1, (int)'=', ampadr - adr);
+			eqadr = memchr(adr +1, (int)'=', ampadr - adr -1);
 			len = ampadr - adr;
 			if(p - pp + len + 2 > u){
 				WS_Release(ctx->ws, 0);
@@ -331,12 +345,6 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 			adr = ampadr;
 		}
 	}
-	
-	if(cnt == 0){
-		WS_Release(ctx->ws, 0);
-		return url;
-	}
-
 	*p = 0;
 	p++;
 	WS_Release(ctx->ws, p - pp);

@@ -1,5 +1,11 @@
 This is a running log of changes to libvmod-awsrest.
 
+libvmod-awsrest 51.8 (------)
+--------------------------------
+
+* Add .formurl function.
+  (Thanks issue #24 Kaelten)
+
 libvmod-awsrest 51.7 (2017-04-20)
 --------------------------------
 
