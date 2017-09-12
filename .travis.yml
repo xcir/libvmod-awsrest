@@ -26,7 +26,7 @@ addons:
 
 before_install:
   - set -e
-  - wget https://varnish-cache.org/_downloads/varnish-5.1.3.tgz
+  - wget https://varnish-cache.org/_downloads/varnish-5.2.0-rc2.tgz
   - tar -zxf varnish-*.tgz
   - pushd varnish-*/
   - ./configure --prefix=/usr
