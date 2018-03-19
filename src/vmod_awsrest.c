@@ -2,11 +2,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* need vcl.h before vrt.h for vmod_evet_f typedef */
-#include "vcl.h"
-#include "vrt.h"
 #include "cache/cache.h"
+#include "vcl.h"
+
+#ifndef VRT_H_INCLUDED
+#include <vrt.h>
+#endif
+
+#ifndef VDEF_H_INCLUDED
+#include <vdef.h>
+#endif
 
 #include "vtim.h"
 #include "vcc_awsrest_if.h"
@@ -16,7 +24,7 @@
 #include <stdio.h>
 #include <mhash.h>
 
-int __match_proto__(vmod_event_f)
+int
 event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
 	return (0);
