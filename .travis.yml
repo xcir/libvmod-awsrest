@@ -4,30 +4,15 @@ dist: trusty
 
 language: c
 
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "Zh6k7uQXdX3NQtVtSQGuR3L9s9QlOYzJdxpmlwq/LZoBEo+4M1vK8kKvRliyM0jTMd1pI2j6HH0MZOs7i8KZBVMYq+3yvr/CXqQb6PQMSZNAZVsWXMaan+qktdDJ07SFOBkGtUaajLQq6YUa/wX0nZ9PTWo4/16p1qY7JB5mrNry56IjOuQ+mILNLxZBnenDGzOYiZV6zt4VMK/X+0U7Usxd4z5g9ZlncTb9RDAiK+qNHjSITWt5qTT76/Sbca0/JFmQOUP3gzWMcGVVlhqE9RYNi6G0UpbnHGScE40q32qghWqlJ17NMl9q2OWFq4tU0iUHv8/krO+CHJNzjnbAr/Bz9ITOjOi9Q3cViwGITY6XLpK/CFwLoKGXCp0/FSn77+njEykiRZqo3XP8CeC92m9S9zU2uE3SjsZJDg5e0LZzSDEBWRGT3b6QBP8WpmOPQ2DBEp7UeSNaD3TIY8lOIjwZaY6BP/z++uvx3Bzw9rzeOQ3CsPSb+mDijOuMKyX5WMDTIKlxCjU/ATPjRfG+eF9Ce6zXslHfyQNxWQIudzOLcCLV7AzBqE/TtsWDeVWEcL1ADrt0vqCqJ0nz8XGIHACDdBaxtn7uFIbkJ+Uxk3ZTslbzqP9IrzOPhoyt6GgV9g6e6yJbgloIRwWUm9UalaDGfsb/xqS1d1yilwPgncw="
-
 addons:
   apt:
     packages:
     - python-docutils
     - libmhash-dev
-  coverity_scan:
-    project:
-      name: "xcir/libvmod-awsrest"
-      description: "Build submitted via Travis CI"
-    notification_email: kokoniimasu+xcir@gmail.com
-    build_command_prepend: "./autogen.sh; ./configure --prefix=/usr; make clean"
-    build_command:   "make -j 4"
-    branch_pattern: master
 
 before_install:
-  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - set -e
-  - wget https://varnish-cache.org/_downloads/varnish-6.0.0.tgz
+  - wget $VARSNIH_TGZ
   - tar -zxf varnish-*.tgz
   - pushd varnish-*/
   - ./configure --prefix=/usr
@@ -39,6 +24,10 @@ before_script:
   - ./autogen.sh
   - ./configure --prefix=/usr
   - make -j4
+
+env:
+  - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-6.0.0.tgz
+  - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-5.2.1.tgz
 
 script:
   - make check -j4
