@@ -8,7 +8,7 @@ env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
-   - secure: "gSE1jmRUPvN6MPwilWWJBkUCI3hbDo4HuXBt9H6AQnUockFUXrM6dnmekVdwKMAR10iBfn5hvciOUUnobgwMt5tJzAXMs2uKkNgX058JAos3dGmk9dQe8v9aYu9MB9gQipwPnob7mAmWSnp75w65fOizBIAZPOs6CKO6HUFEpzFUYwgKCTw2UFZCjWDx/qQ28rekora2wJcqxwD43cXBNMjKsgxYyRmrX71FpHwx6K5lUH8+KbAzu743zAWl7bTSeE3Sk/bYpH+Cz32XTshhkzA/C1cSL4vKHU+7xs++U4hFcrf30Wutqvr7zJGYpC+yg3JBryEEyFCqGIaAD9ImrX/8H69PwbcahIiMe3egLyMXuHRJuej0MGLU0xwvL37YpKHLsMQs2k8D76CAx96DH3sV65kMpdHFiWvhHya3AMuhX9wT3RvgJMxy452fYx+5CdCWSjJPAyRxV0gn1XQMrehJN2t2wVbzBsQKjd7P76bTpRtTy5rn9HbPQTEM2VQ8/haqgRAZ/0yxkdXGE1h1MQ29yZlVIK2uK8+nPApEpREXM7c/bzec53Ti5TWTcT1d1qo+O6lDnvOx60Z+3xLyaeKpe+MsON3M7ijfCRL55YkMJYTmvIBr7LgDHvtpP9FelSKb62lPN8cgHoQNFhprVECkIWQPivIqIDTNbETk7Os="
+   - secure: "Zh6k7uQXdX3NQtVtSQGuR3L9s9QlOYzJdxpmlwq/LZoBEo+4M1vK8kKvRliyM0jTMd1pI2j6HH0MZOs7i8KZBVMYq+3yvr/CXqQb6PQMSZNAZVsWXMaan+qktdDJ07SFOBkGtUaajLQq6YUa/wX0nZ9PTWo4/16p1qY7JB5mrNry56IjOuQ+mILNLxZBnenDGzOYiZV6zt4VMK/X+0U7Usxd4z5g9ZlncTb9RDAiK+qNHjSITWt5qTT76/Sbca0/JFmQOUP3gzWMcGVVlhqE9RYNi6G0UpbnHGScE40q32qghWqlJ17NMl9q2OWFq4tU0iUHv8/krO+CHJNzjnbAr/Bz9ITOjOi9Q3cViwGITY6XLpK/CFwLoKGXCp0/FSn77+njEykiRZqo3XP8CeC92m9S9zU2uE3SjsZJDg5e0LZzSDEBWRGT3b6QBP8WpmOPQ2DBEp7UeSNaD3TIY8lOIjwZaY6BP/z++uvx3Bzw9rzeOQ3CsPSb+mDijOuMKyX5WMDTIKlxCjU/ATPjRfG+eF9Ce6zXslHfyQNxWQIudzOLcCLV7AzBqE/TtsWDeVWEcL1ADrt0vqCqJ0nz8XGIHACDdBaxtn7uFIbkJ+Uxk3ZTslbzqP9IrzOPhoyt6GgV9g6e6yJbgloIRwWUm9UalaDGfsb/xqS1d1yilwPgncw="
 
 addons:
   apt:
@@ -25,6 +25,7 @@ addons:
     branch_pattern: master
 
 before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - set -e
   - wget https://varnish-cache.org/_downloads/varnish-6.0.0.tgz
   - tar -zxf varnish-*.tgz
@@ -32,7 +33,6 @@ before_install:
   - ./configure --prefix=/usr
   - make -sj32
   - sudo make install
-  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - popd
 
 before_script:
