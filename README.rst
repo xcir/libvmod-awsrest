@@ -1,7 +1,5 @@
 .. image:: https://travis-ci.org/xcir/libvmod-awsrest.svg?branch=master
     :target: https://travis-ci.org/xcir/libvmod-awsrest
-.. image:: https://scan.coverity.com/projects/12560/badge.svg
-    :target: https://scan.coverity.com/projects/xcir-libvmod-awsrest
 
 ===================
 vmod_awsrest
@@ -12,9 +10,9 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2017/07/27
-:Version: 51.8
-:Support Varnish Version: 5.0.x, 5.1.x
+:Date: 2018/06/22
+:Version: 60.9
+:Support Varnish Version: 5.0.x, 5.1.x, 5.2.x, 6.0.x
 :Manual section: 3
 
 SYNOPSIS
