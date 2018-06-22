@@ -1,6 +1,6 @@
 Summary: Varnish AWS REST API module
 Name: vmod-awsrest
-Version: 51.7
+Version: 60.9
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -39,6 +39,9 @@ Example VMOD
 %{_mandir}/man?/*
 
 %changelog
+* Fri Jun 20 2018 Shohei Tanaka <kokoniimasu@gmail.com> - 60.9
+- Support Varnish6.0.x
+
 * Thu Apr 20 2017 Shohei Tanaka <kokoniimasu@gmail.com> - 51.7
 - Drop support Varnish 4.1.x
 - Sync newst vmod_example
