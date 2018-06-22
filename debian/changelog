@@ -1,3 +1,9 @@
+libvmod-awsrest (60.9) unstable; urgency=low
+
+  * Support Varnish6.0.x
+
+ -- xcir <xcir@varnish41-1>  Fri, 22 Jun 2018 11:00:00 +0900
+
 libvmod-awsrest (51.7) unstable; urgency=low
 
   * Drop support Varnish 4.1.x
