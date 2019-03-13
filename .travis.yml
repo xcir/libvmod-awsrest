@@ -1,6 +1,6 @@
 ---
 sudo: required
-dist: trusty
+dist: xenial
 
 language: c
 
@@ -9,6 +9,7 @@ addons:
     packages:
     - python-docutils
     - libmhash-dev
+    - python-sphinx
 
 before_install:
   - set -e
