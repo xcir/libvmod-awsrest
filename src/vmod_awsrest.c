@@ -25,7 +25,7 @@
 #include <mhash.h>
 
 int
-#if VRT_MAJOR_VERSION > 8
+#if VRT_MAJOR_VERSION > 8U
   vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 #else
   event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
