@@ -8,6 +8,7 @@
 #
 
 $Module awsrest 3 Awsrest VMOD
+$ABI vrt
 
 DESCRIPTION
 ===========
