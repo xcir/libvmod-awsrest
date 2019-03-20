@@ -16,6 +16,7 @@ before_install:
   - wget $VARSNIH_TGZ
   - tar -zxf *gz
   - pushd varnish-*/
+  - ./autogen.sh
   - ./configure --prefix=/usr
   - make -sj32
   - sudo make install
