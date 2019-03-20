@@ -1,5 +1,11 @@
 This is a running log of changes to libvmod-awsrest.
 
+libvmod-awsrest 62.10 (2019-03-20)
+--------------------------------
+
+* Support Varnish 6.2.x
+* Change ABI check from strict to vrt.
+
 libvmod-awsrest 60.9 (2018-06-22)
 --------------------------------
 
