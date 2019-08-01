@@ -70,11 +70,11 @@ Example(set to req.*)
                 import awsrest;
                 
                 backend default {
-                  .host = "s3-ap-northeast-1.amazonaws.com";
+                  .host = "example-bucket.s3.amazonaws.com";
                 }
                 
                 sub vcl_recv{
-                  set req.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  set req.http.host = "example-bucket.s3.amazonaws.com";
                   awsrest.v4_generic(
                     service           = "s3",
                     region            = "ap-northeast-1",
@@ -97,11 +97,11 @@ Example(set to bereq.*)
                 import awsrest;
                 
                 backend default {
-                  .host = "s3-ap-northeast-1.amazonaws.com";
+                  .host = "example-bucket.s3.amazonaws.com";
                 }
                 
                 sub vcl_backend_fetch{
-                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  set bereq.http.host = "example-bucket.s3.amazonaws.com";
                   awsrest.v4_generic(
                     service           = "s3",
                     region            = "ap-northeast-1",
@@ -122,11 +122,11 @@ Example(using session token)
                 import awsrest;
                 
                 backend default {
-                  .host = "s3-ap-northeast-1.amazonaws.com";
+                  .host = "example-bucket.s3.amazonaws.com";
                 }
                 
                 sub vcl_backend_fetch{
-                  set bereq.http.host = "s3-ap-northeast-1.amazonaws.com";
+                  set bereq.http.host = "example-bucket.s3.amazonaws.com";
                   awsrest.v4_generic(
                     service           = "s3",
                     region            = "ap-northeast-1",

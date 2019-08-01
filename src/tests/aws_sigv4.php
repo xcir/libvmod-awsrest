@@ -2,7 +2,7 @@
 //base http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
 //AWS署名v4テスト用
 //
-//  php aws_sigv4.php [access_key] [secret_key] [url] [session_token(option)]
+//  php aws_sigv4.php [access_key] [secret_key] [bucket] [url] [session_token(option)] [region(option)]
 //
 function hash_sha256_raw($msg, $key)
 {
@@ -17,16 +17,15 @@ function getSignature($key, $dateStamp, $regionName, $serviceName)
     $kSigning = hash_sha256_raw("aws4_request", $kService);
     return $kSigning;
 }
-function main($access_key,$secret_key,$canonical_uri,$session_token=""){
+function main($access_key, $secret_key, $bucket, $canonical_uri, $session_token="", $region="ap-northeast-1"){
 	//パラメータ
 	$service               = 's3';
-	$region                = 'ap-northeast-1';
 //	$canonical_uri         = 'URL指定' ;
 //	$access_key            = 'アクセスキー';
 //	$secret_key            = '秘密鍵';
 //	$session_token         = 'セッショントークン';
 	$method                = 'GET';
-	$host                  = "${service}-${region}.amazonaws.com";
+	$host                  = "${bucket}.${service}.amazonaws.com";
 	 
 	$canonical_querystring = '';
 	$signed_headers        = 'host;x-amz-content-sha256;x-amz-date';
@@ -108,5 +107,7 @@ function prn($k,$v){
 	echo str_repeat("<",40)."\n";
 }
 $token = '';
-if(isset($argv[4]))$token = $argv[4];
-main($argv[1],$argv[2],$argv[3],$token);
+if(isset($argv[5]))$token = $argv[5];
+$region = 'ap-northeast-1';
+if(isset($argv[6]))$region = $argv[6];
+main($argv[1],$argv[2],$argv[3],$argv[4],$token,$region);
