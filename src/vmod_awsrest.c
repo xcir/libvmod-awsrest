@@ -50,7 +50,11 @@ vmod_hmac_sha256(VRT_CTX,
 	
 	unsigned char *mac;
 	unsigned u;
+	#if VRT_MAJOR_VERSION > 9
+	u = WS_ReserveAll(ctx->ws);
+	#else
 	u = WS_Reserve(ctx->ws, 0);
+	#endif
 	assert(u > blocksize);
 	mac = (unsigned char*)ctx->ws->f;
 	
@@ -295,7 +299,11 @@ vmod_formurl(VRT_CTX, VCL_STRING url){
 		return url;
 	}
 
+	#if VRT_MAJOR_VERSION > 9
+	u = WS_ReserveAll(ctx->ws);
+	#else
 	u = WS_Reserve(ctx->ws, 0);
+	#endif
 	pp = p = ctx->ws->f;
 
 	len = adr - url;
