@@ -153,8 +153,8 @@ void vmod_v4_generic(VRT_CTX,
 	////////////////
 	//create date
 	time_t tt;
-	char amzdate[17];
-	char datestamp[9];
+	char amzdate[33];
+	char datestamp[25];
 	tt = time(NULL);
 	struct tm * gmtm = gmtime(&tt);
 	
