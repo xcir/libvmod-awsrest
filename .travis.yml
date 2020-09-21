@@ -33,6 +33,7 @@ script:
 env:
   matrix:
     - VARSNIH_TGZ=https://github.com/varnishcache/varnish-cache/archive/master.tar.gz
+    - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-6.5.0.tgz
     - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-6.4.0.tgz
     - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-6.3.0.tgz
     - VARSNIH_TGZ=https://varnish-cache.org/_downloads/varnish-6.2.1.tgz
