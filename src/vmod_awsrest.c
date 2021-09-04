@@ -261,18 +261,33 @@ void vmod_v4_generic(VRT_CTX,
 		psigned_headers,
 		signature);
 	
-	////////////////
-	//Set to header
-	gs.what = "\016Authorization:";
-	VRT_SetHdr(ctx, &gs        , pauthorization , vrt_magic_string_end);
-	gs.what = "\025x-amz-content-sha256:";
-	VRT_SetHdr(ctx, &gs , payload_hash , vrt_magic_string_end);
-	gs.what = "\013x-amz-date:";
-	VRT_SetHdr(ctx, &gs           , amzdate , vrt_magic_string_end);
-	if(tokenlen > 0){
-	  gs.what="\025x-amz-security-token:";
-	  VRT_SetHdr(ctx, &gs, token, vrt_magic_string_end);
-	}
+#if VRT_MAJOR_VERSION >= 13U
+        ////////////////
+        //Set to header
+        gs.what = "\016Authorization:";
+        VRT_SetHdr(ctx, &gs        , pauthorization , NULL);
+        gs.what = "\025x-amz-content-sha256:";
+        VRT_SetHdr(ctx, &gs , payload_hash , NULL);
+        gs.what = "\013x-amz-date:";
+        VRT_SetHdr(ctx, &gs           , amzdate , NULL);
+        if(tokenlen > 0){
+          gs.what="\025x-amz-security-token:";
+          VRT_SetHdr(ctx, &gs, token, NULL);
+        }
+#else
+        ////////////////
+        //Set to header
+        gs.what = "\016Authorization:";
+        VRT_SetHdr(ctx, &gs        , pauthorization , vrt_magic_string_end);
+        gs.what = "\025x-amz-content-sha256:";
+        VRT_SetHdr(ctx, &gs , payload_hash , vrt_magic_string_end);
+        gs.what = "\013x-amz-date:";
+        VRT_SetHdr(ctx, &gs           , amzdate , vrt_magic_string_end);
+        if(tokenlen > 0){
+          gs.what="\025x-amz-security-token:";
+          VRT_SetHdr(ctx, &gs, token, vrt_magic_string_end);
+        }
+#endif
 }
 
 VCL_STRING
