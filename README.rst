@@ -241,6 +241,30 @@ directory relevant to the prefix. The vmod installation directory can be
 overridden by passing the ``vmoddir`` variable to ``make install``.
 
 
+Google Cloud Storage(GCS) sample
+=================================
+
+        ::
+
+                import awsrest;
+                
+                backend default {
+                  .host = "example-bucket.storage.googleapis.com";
+                }
+                
+                sub vcl_recv{
+                  set req.http.host = "example-bucket.storage.googleapis.com";
+                  awsrest.v4_generic(
+                    service           = "storage",
+                    region            = "asia-northeast1",
+                    access_key        = "[Your Access Key]",
+                    secret_key        = "[Your Secret Key]",
+                    signed_headers    = "host;",
+                    canonical_headers = "host:" + req.http.host + awsrest.lf()
+                  );
+                }
+
+
 COMMON PROBLEMS
 ===============
 
