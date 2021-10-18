@@ -10,7 +10,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import ${vmod_awsrest};
+	import awsrest;
 
 	sub vcl_recv {
 		awsrest.v4_generic(
