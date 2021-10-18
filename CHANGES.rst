@@ -1,5 +1,10 @@
 This is a running log of changes to libvmod-awsrest.
 
+libvmod-awsrest 70.11 (2021-10-18)
+--------------------------------
+
+* Support Varnish 6.6.x and 7.0.x
+
 libvmod-awsrest 62.10 (2019-03-20)
 --------------------------------
 

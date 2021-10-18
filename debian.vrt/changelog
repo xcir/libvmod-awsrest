@@ -1,0 +1,5 @@
+libvmod-awsrest (%VRT%.70.11%CN%) focal; urgency=medium
+
+  * Support Varnish6.6.x(VRT=13) and Varnish7.0.x(VRT=14)
+
+ -- Shohei Tanaka(@xcir) <kokoniimasu@gmail.com>  Mon, 18 Oct 2021 12:21:02 +0900

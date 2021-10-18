@@ -10,15 +10,41 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2019/03/20
-:Version: 62.10
-:Support Varnish Version: 5.0.x ~ 6.4.x
+:Date: 2021/10/18
+:Version: 70.11
+:Support Varnish Version: 5.0.x ~ 7.0.x
 :Manual section: 3
 
 SYNOPSIS
 ========
 
 import awsrest;
+
+Versioning(Source)
+====================
+[varnish-version].[library-version]
+
+65.1 is v1 for Varnish6.5.x
+
+Versioning(Package)
+====================
+[VRT-version].[Source-version]
+
+120.65.1 is 65.1 for VRT12.0
+
+============ ===============
+VRT Version  Varnish Version 
+------------ ---------------
+14.0         7.0.x
+13.0         6.6.x
+12.0         6.5.x
+11.0         6.4.x
+10.0         6.3.x
+9.0          6.2.x
+8.0          6.1.x
+7.1          6.0.4~6.0.x
+7.0          6.0.0~6.0.3
+============ ===============
 
 For Varnish3.0.x
 =================

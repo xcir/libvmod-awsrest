@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libvmod-awsrest
+Source: https://github.com/xcir/libvmod-awsrest
+
+Files: *
+Copyright: 2018-2021 Shohei Tanaka
+
+License: BSD-2-clause
