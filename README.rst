@@ -244,6 +244,7 @@ overridden by passing the ``vmoddir`` variable to ``make install``.
 Google Cloud Storage(GCS) sample
 =================================
 
+It can also be used in GCS.
         ::
 
                 import awsrest;
