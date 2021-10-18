@@ -31,7 +31,7 @@ jobs:
           - "ubuntu-20.04"
           - "ubuntu-18.04"
         vrt:
-          - 120
+          - 140
           - 71
     runs-on: ${{ matrix.os }}
     steps:
