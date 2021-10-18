@@ -1,0 +1,56 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        varnish:
+          - "https://github.com/varnishcache/varnish-cache/archive/master.tar.gz" #VRT=14.0
+          - "https://varnish-cache.org/_downloads/varnish-7.0.0.tgz" #VRT=14.0
+          - "https://varnish-cache.org/_downloads/varnish-6.6.1.tgz" #VRT=13.0
+          - "https://varnish-cache.org/_downloads/varnish-6.5.2.tgz" #VRT=12.0
+          - "https://varnish-cache.org/_downloads/varnish-6.4.0.tgz" #VRT=11.0
+          - "https://varnish-cache.org/_downloads/varnish-6.3.2.tgz" #VRT=10.0
+          - "https://varnish-cache.org/_downloads/varnish-6.2.3.tgz" #VRT=9.0
+          # - "https://varnish-cache.org/_downloads/varnish-6.1.1.tgz" #VRT=8.0
+          - "https://varnish-cache.org/_downloads/varnish-6.0.8.tgz" #VRT=7.1
+          # - "https://varnish-cache.org/_downloads/varnish-6.0.3.tgz" #VRT=7.0
+        include:
+          - varnish: "https://github.com/varnishcache/varnish-cache/archive/master.tar.gz"
+            allow_failures: "true"
+    steps:
+    - uses: actions/checkout@v2
+    - name: install build depends
+      run: sudo apt-get install python3-docutils python3-sphinx
+    - name: build varnish
+      run: |
+       wget ${{ matrix.varnish }}
+       tar -zxf *gz
+       pushd varnish-*/
+       ./autogen.sh
+       ./configure --prefix=/usr
+       make -sj32
+       sudo make install
+       popd
+      continue-on-error: ${{ matrix.allow_failures == 'true' }}
+    - name: build vmod
+      run: |
+       cd $GITHUB_WORKSPACE
+       ./autogen.sh
+       ./configure --prefix=/usr
+       make -j4
+       make check -j4
+      continue-on-error: ${{ matrix.allow_failures == 'true' }}

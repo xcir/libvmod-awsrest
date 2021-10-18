@@ -1,0 +1,74 @@
+name: build-deb
+# Controls when the action will run. 
+on:
+  push:
+    tags:
+      - 'v*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  release:
+    runs-on: "ubuntu-20.04"
+    outputs:
+      upload_url: ${{steps.create_release.outputs.upload_url}}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: true
+  build:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - "ubuntu-20.04"
+          - "ubuntu-18.04"
+        vrt:
+          - 120
+          - 71
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: install build depends
+      run: |
+       sudo apt-get install python3-docutils python3-sphinx build-essential devscripts debhelper python-docutils dh-autoreconf pkg-config autogen automake autotools-dev autoconf libtool
+    - name: install varnish
+      run: |
+       cd $GITHUB_WORKSPACE
+       ./sw_vrt.sh ${{ matrix.vrt }}
+       cd debian.vrt
+       ./pkg.sh
+       ./bf_build_${{ matrix.vrt }}.sh
+    - name: build vmod
+      run: |
+       cd $GITHUB_WORKSPACE
+       rm -f ../*.deb
+       debuild -us -uc -b
+       ls ../
+    - name: Get filename
+      id: filename
+      run: find ${GITHUB_WORKSPACE}/../ -maxdepth 1 -name *.deb  -type f  -printf "::set-output name=deb::%f\n"
+    - name: Test pkg
+      run: |
+       cd ${GITHUB_WORKSPACE}/../
+       sudo dpkg -i ${{ steps.filename.outputs.deb }}
+       cd ${GITHUB_WORKSPACE}/debian.vrt
+       varnishtest test.vtc
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ../${{ steps.filename.outputs.deb }}
+        asset_name: ${{ steps.filename.outputs.deb }}
+        asset_content_type: application/vnd.debian.binary-package
