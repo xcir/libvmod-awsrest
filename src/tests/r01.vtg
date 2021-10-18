@@ -9,15 +9,15 @@ varnishtest "awsrest"
 
 varnish v1 -vcl+backend {
 	import awsrest;
-	backend default {.host = "${bucket}.s3.amazonaws.com";}
+	backend default {.host = "${bucket}.storage.googleapis.com";}
 	sub vcl_recv {
 		set req.http.x-orgurl = req.url;
 		set req.url           = "${url}";
-		set req.http.host     = "${bucket}.s3.amazonaws.com";
+		set req.http.host     = "${bucket}.storage.googleapis.com";
 		
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
-				service           = "s3",
+				service           = "storage",
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
@@ -31,7 +31,7 @@ varnish v1 -vcl+backend {
 		if(bereq.http.x-orgurl == "/2"){
 			unset bereq.http.Authorization;
 			awsrest.v4_generic(
-				service           = "s3",
+				service           = "storage",
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
