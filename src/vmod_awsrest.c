@@ -261,7 +261,7 @@ void vmod_v4_generic(VRT_CTX,
 		psigned_headers,
 		signature);
 	
-#if VRT_MAJOR_VERSION >= 13U
+#if VRT_MAJOR_VERSION >= 14U
         ////////////////
         //Set to header
         gs.what = "\016Authorization:";
