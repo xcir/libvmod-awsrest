@@ -34,7 +34,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install build depends
-      run: sudo apt-get install python3-docutils python3-sphinx
+      run: sudo apt-get install python3-docutils python3-sphinx libmhash-dev
     - name: build varnish
       run: |
        wget ${{ matrix.varnish }}
