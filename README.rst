@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/xcir/libvmod-awsrest.svg?branch=master
-    :target: https://travis-ci.org/xcir/libvmod-awsrest
+.. image:: https://github.com/xcir/libvmod-awsrest/actions/workflows/test.yml/badge.svg?branch=master
+    :target: https://github.com/xcir/libvmod-awsrest/actions/workflows/test.yml
 
 ===================
 vmod_awsrest
