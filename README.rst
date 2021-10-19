@@ -10,8 +10,8 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2021/10/18
-:Version: 70.11
+:Date: TBD
+:Version: 70.12
 :Support Varnish Version: 5.0.x ~ 7.0.x
 :Manual section: 3
 
