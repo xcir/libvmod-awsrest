@@ -1,0 +1,13 @@
+Source: libvmod-awsrest
+Section: web
+Priority: optional
+Maintainer: Shohei Tanaka(@xcir) <kokoniimasu@gmail.com>
+Build-Depends: debhelper (>=9), python-docutils, dh-autoreconf, pkg-config, autogen, automake, autotools-dev, autoconf, libtool, varnish-dev (>= 6.6.0), varnish-dev (<< 7.0.0), libmhash-dev
+Standards-Version: 3.9.6
+Homepage: https://github.com/xcir/libvmod-awsrest
+
+Package: libvmod-awsrest
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, varnish (>= 6.6.0), varnish (<< 7.0.0), libmhash2
+Replaces: libvmod-awsrest (<< 130)
+Description: Varnish AWS REST API module
