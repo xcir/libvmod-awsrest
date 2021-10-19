@@ -1,0 +1,50 @@
+varnishtest "headersort"
+
+
+server s1 {
+	rxreq
+	expect req.http.authorization ~ ", SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
+	txresp
+	rxreq
+	expect req.http.authorization ~ ", SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-z;y-a,"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import ${vmod_awsrest};
+
+	sub vcl_recv {
+		set req.http.x-z="x-z";
+		set req.http.y-a="y-a";
+		if(req.url ~ "/1"){
+			awsrest.v4_generic(
+				service           = "s3",
+				region            = "ap-northeast-1",
+				access_key        = "[Your Access Key]",
+				secret_key        = "[Your Secret Key]",
+				signed_headers    = "host;",
+				canonical_headers = "host:" + req.http.host + awsrest.lf() 
+			);
+		}else{
+			awsrest.v4_generic(
+				service           = "s3",
+				region            = "ap-northeast-1",
+				access_key        = "[Your Access Key]",
+				secret_key        = "[Your Secret Key]",
+				signed_headers    = "x-z;y-a;host;",
+				canonical_headers = "y-a:" + req.http.y-a + awsrest.lf() + "x-z:" + req.http.x-z + awsrest.lf() + "host:" + req.http.host + awsrest.lf() 
+			);
+		}
+		return(pass);
+	}
+
+} -start
+
+client c1 {
+	txreq -url "/1"
+	rxresp
+	txreq -url "/2"
+	rxresp
+}
+
+client c1 -run

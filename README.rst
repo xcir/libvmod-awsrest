@@ -10,8 +10,8 @@ Varnish AWS REST API module
 -------------------------------
 
 :Author: Shohei Tanaka(@xcir)
-:Date: 2021/10/18
-:Version: 70.11
+:Date: TBD
+:Version: 70.12
 :Support Varnish Version: 5.0.x ~ 7.0.x
 :Manual section: 3
 
@@ -375,10 +375,22 @@ COPYRIGHT
 This document is licensed under the same license as the
 libvmod-awsrest project. See LICENSE for details.
 
-* Copyright (c) 2012-2017 Shohei Tanaka(@xcir)
+* Copyright (c) 2012-2021 Shohei Tanaka(@xcir)
 
 File layout and configuration based on libvmod-example
 
 * Copyright (c) 2011 Varnish Software AS
+* https://github.com/varnishcache/libvmod-example/
+* https://github.com/varnishcache/libvmod-example/blob/master/LICENSE
 
-hmac-sha1 and base64 based on libvmod-digest( https://github.com/varnish/libvmod-digest )
+hmac-sha1 and base64 based on libvmod-digest
+
+* Copyright (c) 2011-2019 Varnish Software AS
+* https://github.com/varnish/libvmod-digest
+* https://github.com/varnish/libvmod-digest/blob/master/src/vmod_digest.c
+
+headersort based on libvmod-std/querysort
+
+* Copyright (c) 2010-2014 Varnish Software AS
+* https://github.com/varnishcache/varnish-cache
+* https://github.com/varnishcache/varnish-cache/blob/master/vmod/vmod_std_querysort.c

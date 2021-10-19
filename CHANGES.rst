@@ -1,5 +1,10 @@
 This is a running log of changes to libvmod-awsrest.
 
+libvmod-awsrest 70.12 (2021-10-20)
+--------------------------------
+
+* Fixed sorting problems in Signed/CanonicalHeaders (#32)
+
 libvmod-awsrest 70.11 (2021-10-18)
 --------------------------------
 

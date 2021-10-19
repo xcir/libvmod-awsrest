@@ -9,34 +9,37 @@ varnishtest "awsrest"
 
 varnish v1 -vcl+backend {
 	import awsrest;
+
 	backend default {.host = "${bucket}.storage.googleapis.com";}
 	sub vcl_recv {
 		set req.http.x-orgurl = req.url;
 		set req.url           = "${url}";
 		set req.http.host     = "${bucket}.storage.googleapis.com";
-		
+		set req.http.x-hello  = "hello";
+
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
 				service           = "storage",
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				signed_headers    = "host;",
-				canonical_headers = "host:" + req.http.host + awsrest.lf()
+				signed_headers    = "x-hello;host;",
+				canonical_headers = "x-hello:" + req.http.x-hello + awsrest.lf() + "host:" + req.http.host + awsrest.lf() 
 			);
 		}
 		return(pass);
 	}
 	sub vcl_backend_fetch{
 		if(bereq.http.x-orgurl == "/2"){
+			
 			unset bereq.http.Authorization;
 			awsrest.v4_generic(
 				service           = "storage",
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				signed_headers    = "host;",
-				canonical_headers = "host:" + bereq.http.host + awsrest.lf()
+				signed_headers    = "host;x-hello;",
+				canonical_headers = "x-hello:" + bereq.http.x-hello + awsrest.lf() + "host:" + bereq.http.host + awsrest.lf()
 			);
 		}
 	}

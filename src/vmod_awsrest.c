@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 /* need vcl.h before vrt.h for vmod_evet_f typedef */
 #include "cache/cache.h"
 #include "vcl.h"
@@ -33,6 +32,111 @@ int
 {
 	return (0);
 }
+
+static int
+compa(const void *a, const void *b)
+{
+	const char * const *pa = a;
+	const char * const *pb = b;
+	const char *a1, *b1;
+
+	for (a1 = pa[0], b1 = pb[0]; a1 < pa[1] && b1 < pb[1]; a1++, b1++)
+		if (*a1 != *b1)
+			return (*a1 - *b1);
+	return (0);
+}
+
+char * 
+headersort(VRT_CTX, char *txt, char sep, char sfx)
+{
+	const char *cq, *cu;
+	char *p, *r;
+	const char **pp;
+	const char **pe;
+	unsigned u;
+	int np;
+	int i;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+
+	if (txt == NULL)
+		return (NULL);
+
+	/* Split :query from :url */
+	cu = txt;
+
+	/* Spot single-param queries */
+	cq = strchr(cu, sep);
+	if (cq == NULL)
+		return (txt);
+
+	r = WS_Copy(ctx->ws, txt, -1);
+	if (r == NULL)
+		return (txt);
+
+	u = WS_ReserveLumps(ctx->ws, sizeof(const char **));
+#if VRT_MAJOR_VERSION >= 12U
+	pp = WS_Reservation(ctx->ws);
+#else
+	pp = (const char**)(void*)(ctx->ws->f);
+#endif
+	if (u < 4) {
+		WS_Release(ctx->ws, 0);
+		WS_MarkOverflow(ctx->ws);
+		return (txt);
+	}
+	pe = pp + u;
+
+	/* Collect params as pointer pairs */
+	np = 0;
+	pp[np++] =  cu;
+	for (cq =  cu; *cq != '\0'; cq++) {
+		if (*cq == sep) {
+			if (pp + np + 3 > pe) {
+				WS_Release(ctx->ws, 0);
+				WS_MarkOverflow(ctx->ws);
+				return (txt);
+			}
+			pp[np++] = cq;
+			/* Skip trivially empty params */
+			while (cq[1] == sep)
+				cq++;
+			pp[np++] = cq + 1;
+		}
+	}
+	pp[np++] = cq;
+	assert(!(np & 1));
+
+	qsort(pp, np / 2, sizeof(*pp) * 2, compa);
+
+	/* Emit sorted params */
+	p =  r + (cu - txt);
+	cq = "";
+	for (i = 0; i < np; i += 2) {
+		/* Ignore any edge-case zero length params */
+		if (pp[i + 1] == pp[i])
+			continue;
+		assert(pp[i + 1] > pp[i]);
+		if (*cq)
+			*p++ = *cq;
+		memcpy(p, pp[i], pp[i + 1] - pp[i]);
+		p += pp[i + 1] - pp[i];
+		cq = &sep;
+	}
+	if(sfx){
+		*p = sfx;
+		p++;
+	}
+	*p = '\0';
+
+	WS_Release(ctx->ws, 0);
+	return (r);
+}
+
+
+
+
+
 
 /////////////////////////////////////////////
 static const char *
@@ -185,25 +289,29 @@ void vmod_v4_generic(VRT_CTX,
 
 	size_t len = strlen(signed_headers) + 32;
 	if(tokenlen > 0) len += 21; // ;x-amz-security-token
+	char *psh = WS_Alloc(ctx->ws,len);
 	char *psigned_headers = WS_Alloc(ctx->ws,len);
 	if(tokenlen > 0) {
-		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",signed_headers);
+		sprintf(psh,"%sx-amz-content-sha256;x-amz-date;x-amz-security-token",signed_headers);
 	} else {
-		sprintf(psigned_headers,"%sx-amz-content-sha256;x-amz-date",signed_headers);
+		sprintf(psh,"%sx-amz-content-sha256;x-amz-date",signed_headers);
 	}
-	
+	psigned_headers = headersort(ctx, psh, ';', 0);
 	////////////////
 	//create canonical headers
 	len = strlen(canonical_headers) + 115;
 	// Account for addition of "x-amz-security-token:[token]\n"
 	if(tokenlen > 0) len += 22 + tokenlen;
+	char *pch = WS_Alloc(ctx->ws,len);
 	char *pcanonical_headers = WS_Alloc(ctx->ws,len);
+
 	if(tokenlen > 0) {
-		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",canonical_headers,payload_hash,amzdate,token);
+		sprintf(pch,"%sx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",canonical_headers,payload_hash,amzdate,token);
 	} else {
-		sprintf(pcanonical_headers,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",canonical_headers,payload_hash,amzdate);
+		sprintf(pch,"%sx-amz-content-sha256:%s\nx-amz-date:%s\n",canonical_headers,payload_hash,amzdate);
 	}
-	
+	pcanonical_headers = headersort(ctx, pch, '\n', '\n');
+
 	////////////////
 	//create credential scope
 	len = strlen(datestamp)+ strlen(region)+ strlen(service)+ 16;

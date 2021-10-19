@@ -1,3 +1,9 @@
+libvmod-awsrest (71.70.12) focal; urgency=medium
+
+  * Fixed sorting problems in Signed/CanonicalHeaders (#32)
+
+ -- Shohei Tanaka(@xcir) <kokoniimasu@gmail.com>  Tue, 19 Oct 2021 12:21:02 +0900
+
 libvmod-awsrest (71.70.11) focal; urgency=medium
 
   * Support Varnish6.6.x(VRT=13) and Varnish7.0.x(VRT=14)
