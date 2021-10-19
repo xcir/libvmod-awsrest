@@ -75,7 +75,11 @@ headersort(VRT_CTX, char *txt, char sep, char sfx)
 		return (txt);
 
 	u = WS_ReserveLumps(ctx->ws, sizeof(const char **));
+#if VRT_MAJOR_VERSION >= 12U
 	pp = WS_Reservation(ctx->ws);
+#else
+	pp = (const char**)(void*)(ctx->ws->f);
+#endif
 	if (u < 4) {
 		WS_Release(ctx->ws, 0);
 		WS_MarkOverflow(ctx->ws);
