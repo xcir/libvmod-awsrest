@@ -15,7 +15,8 @@ varnish v1 -vcl+backend {
 		set req.http.x-orgurl = req.url;
 		set req.url           = "${url}";
 		set req.http.host     = "${bucket}.storage.googleapis.com";
-		set req.http.x-hello="hello";
+		set req.http.x-hello  = "hello";
+
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
 				service           = "storage",

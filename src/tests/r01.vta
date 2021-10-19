@@ -14,6 +14,7 @@ varnish v1 -vcl+backend {
 		set req.http.x-orgurl = req.url;
 		set req.url           = "${url}";
 		set req.http.host     = "${bucket}.s3.amazonaws.com";
+		set req.http.x-hello  = "hello";
 		
 		if(req.http.x-orgurl == "/1"){
 			awsrest.v4_generic(
@@ -21,8 +22,8 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				signed_headers    = "host;",
-				canonical_headers = "host:" + req.http.host + awsrest.lf()
+				signed_headers    = "x-hello;host;",
+				canonical_headers = "x-hello:" + req.http.x-hello + awsrest.lf() + "host:" + req.http.host + awsrest.lf() 
 			);
 		}
 		return(pass);
@@ -35,8 +36,8 @@ varnish v1 -vcl+backend {
 				region            = "${region}",
 				access_key        = "${accesskey}",
 				secret_key        = "${secretkey}",
-				signed_headers    = "host;",
-				canonical_headers = "host:" + bereq.http.host + awsrest.lf()
+				signed_headers    = "host;x-hello;",
+				canonical_headers = "x-hello:" + bereq.http.x-hello + awsrest.lf() + "host:" + bereq.http.host + awsrest.lf()
 			);
 		}
 	}
