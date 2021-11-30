@@ -19,20 +19,21 @@ LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
-# check for mhash
+
 AC_CHECK_LIB(mhash, mhash_count, [AC_DEFINE([HAVE_MHASH],[1],[Define we have mhash])],
-	[AC_MSG_ERROR([libvmod-awsrest requires libmhash.])])
+       [AC_MSG_ERROR([libvmod-awsrest requires libmhash.])])
 
 AC_ARG_WITH([rst2man],
-	AS_HELP_STRING(
+	[AS_HELP_STRING(
 		[--with-rst2man=PATH],
-		[Location of rst2man (auto)]),
+		[Location of rst2man (auto)])],
 	[RST2MAN="$withval"],
-	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
+	[AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], [])])
+
 
 m4_ifndef([VARNISH_PREREQ], AC_MSG_ERROR([Need varnish.m4 -- see README.rst]))
 
-#VARNISH_PREREQ([5.0], [5.1])
+VARNISH_PREREQ([5.0])
 VARNISH_VMODS([awsrest])
 
 VMOD_TESTS="$(cd $srcdir/src && echo tests/*.vtc)"
