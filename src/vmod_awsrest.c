@@ -372,14 +372,14 @@ void vmod_v4_generic(VRT_CTX,
 #if VRT_MAJOR_VERSION >= 14U
         ////////////////
         //Set to header
-        gs.what = "\016Authorization:";
+        gs.what = (typeof(gs.what))"\016Authorization:";
         VRT_SetHdr(ctx, &gs        , pauthorization , NULL);
-        gs.what = "\025x-amz-content-sha256:";
+        gs.what = (typeof(gs.what))"\025x-amz-content-sha256:";
         VRT_SetHdr(ctx, &gs , payload_hash , NULL);
-        gs.what = "\013x-amz-date:";
+        gs.what = (typeof(gs.what))"\013x-amz-date:";
         VRT_SetHdr(ctx, &gs           , amzdate , NULL);
         if(tokenlen > 0){
-          gs.what="\025x-amz-security-token:";
+          gs.what = (typeof(gs.what))"\025x-amz-security-token:";
           VRT_SetHdr(ctx, &gs, token, NULL);
         }
 #else
