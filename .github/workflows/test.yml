@@ -18,16 +18,16 @@ jobs:
       fail-fast: false
       matrix:
         varnish:
-          - "https://github.com/varnishcache/varnish-cache/archive/master.tar.gz" #VRT=14.0
+          - "https://github.com/varnishcache/varnish-cache/archive/master.tar.gz" #VRT=21.0
+          - "https://varnish-cache.org/_downloads/varnish-7.7.0.tgz" #VRT=21.0
+          - "https://varnish-cache.org/_downloads/varnish-7.6.0.tgz" #VRT=20.0
+          - "https://varnish-cache.org/_downloads/varnish-7.5.0.tgz" #VRT=19.0
+          - "https://varnish-cache.org/_downloads/varnish-7.4.0.tgz" #VRT=18.0
+          - "https://varnish-cache.org/_downloads/varnish-7.3.0.tgz" #VRT=17.0
+          - "https://varnish-cache.org/_downloads/varnish-7.2.0.tgz" #VRT=16.0
+          - "https://varnish-cache.org/_downloads/varnish-7.1.0.tgz" #VRT=15.0
           - "https://varnish-cache.org/_downloads/varnish-7.0.0.tgz" #VRT=14.0
           - "https://varnish-cache.org/_downloads/varnish-6.6.1.tgz" #VRT=13.0
-          - "https://varnish-cache.org/_downloads/varnish-6.5.2.tgz" #VRT=12.0
-          - "https://varnish-cache.org/_downloads/varnish-6.4.0.tgz" #VRT=11.0
-          - "https://varnish-cache.org/_downloads/varnish-6.3.2.tgz" #VRT=10.0
-          - "https://varnish-cache.org/_downloads/varnish-6.2.3.tgz" #VRT=9.0
-          # - "https://varnish-cache.org/_downloads/varnish-6.1.1.tgz" #VRT=8.0
-          - "https://varnish-cache.org/_downloads/varnish-6.0.8.tgz" #VRT=7.1
-          # - "https://varnish-cache.org/_downloads/varnish-6.0.3.tgz" #VRT=7.0
         include:
           - varnish: "https://github.com/varnishcache/varnish-cache/archive/master.tar.gz"
             allow_failures: "true"
